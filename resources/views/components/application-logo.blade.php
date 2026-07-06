@@ -1,0 +1,1 @@
+<img src="{{ asset('logo-multibatt.png') }}" alt="Multibatt" class="h-20 w-auto">

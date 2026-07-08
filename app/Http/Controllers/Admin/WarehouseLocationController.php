@@ -48,6 +48,18 @@ class WarehouseLocationController extends Controller
             'activa' => 'sometimes|boolean',
         ]);
 
+        // No se puede desactivar una ubicación que todavía tiene productos:
+        // quedaría stock "invisible" para asignaciones y correcciones.
+        if (array_key_exists('activa', $validated) && ! $request->boolean('activa')) {
+            $tieneStock = $warehouseLocation->productLocations()->where('cantidad', '>', 0)->exists();
+
+            if ($tieneStock) {
+                return response()->json([
+                    'message' => 'No puedes desactivar una ubicación que aún tiene productos guardados. Reubica o corrige sus existencias primero.',
+                ], 422);
+            }
+        }
+
         $warehouseLocation->update($validated);
 
         return response()->json($warehouseLocation);

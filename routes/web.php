@@ -34,6 +34,11 @@ Route::middleware(['auth'])->group(function () {
 
         Route::post('/ubicaciones', [WarehouseLocationController::class, 'store'])->name('locations.store');
         Route::patch('/ubicaciones/{warehouseLocation}', [WarehouseLocationController::class, 'update'])->name('locations.update');
+
+        // Eliminar una existencia y ver su historial son solo de admin;
+        // el bodeguero corrige editando (queda trazado), no borrando.
+        Route::get('/existencias/historial', [ProductLocationController::class, 'historial'])->name('product-locations.historial');
+        Route::delete('/existencias/{productLocation}', [ProductLocationController::class, 'destroy'])->name('product-locations.destroy');
     });
 
     // Mapa de bodega: los 3 roles pueden consultarlo; solo admin puede editarlo
@@ -67,7 +72,6 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/existencias', [ProductLocationController::class, 'store'])->name('product-locations.store');
         Route::get('/existencias/{productLocation}/edit', [ProductLocationController::class, 'edit'])->name('product-locations.edit');
         Route::patch('/existencias/{productLocation}', [ProductLocationController::class, 'update'])->name('product-locations.update');
-        Route::delete('/existencias/{productLocation}', [ProductLocationController::class, 'destroy'])->name('product-locations.destroy');
 
         Route::get('/orders/{order}/picking', [PickingController::class, 'show'])->name('orders.picking');
         Route::post('/orders/{order}/picking/escanear', [PickingController::class, 'escanear'])->name('orders.picking.escanear');

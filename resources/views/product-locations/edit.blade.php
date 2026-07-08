@@ -29,7 +29,7 @@
                 <option value="">Seleccione un producto</option>
                 @foreach ($products as $product)
                 <option value="{{ $product->id }}" {{ old('product_id', $productLocation->product_id) == $product->id ? 'selected' : '' }}>
-                    {{ $product->sku }} — {{ $product->name }}
+                    {{ $product->sku }} — {{ $product->name }}{{ $product->active ? '' : ' (inactivo)' }}
                 </option>
                 @endforeach
             </select>
@@ -44,7 +44,7 @@
                 <option value="">Seleccione una ubicación</option>
                 @foreach ($locations as $location)
                 <option value="{{ $location->id }}" {{ old('warehouse_location_id', $productLocation->warehouse_location_id) == $location->id ? 'selected' : '' }}>
-                    {{ $location->nombre }} ({{ $location->codigo }})
+                    {{ $location->nombre }} ({{ $location->codigo }}){{ $location->activa ? '' : ' (inactiva)' }}
                 </option>
                 @endforeach
             </select>

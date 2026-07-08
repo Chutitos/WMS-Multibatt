@@ -1,5 +1,9 @@
 @extends('layouts.wms')
 
+@php
+$esAdmin = auth()->user()->role->name === 'admin';
+@endphp
+
 @section('content')
 <div class="flex items-center justify-between mb-6">
     <div>
@@ -9,10 +13,19 @@
         </p>
     </div>
 
-    <a href="{{ route('product-locations.create') }}"
-        class="inline-flex items-center px-5 py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700">
-        Asignar existencia
-    </a>
+    <div class="flex items-center gap-3">
+        @if ($esAdmin)
+        <a href="{{ route('product-locations.historial') }}"
+            class="inline-flex items-center px-5 py-3 bg-slate-200 text-slate-800 rounded-xl font-semibold hover:bg-slate-300">
+            Historial
+        </a>
+        @endif
+
+        <a href="{{ route('product-locations.create') }}"
+            class="inline-flex items-center px-5 py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700">
+            Asignar existencia
+        </a>
+    </div>
 </div>
 
 <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
@@ -49,6 +62,7 @@
                             class="inline-flex items-center px-3 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700">
                             Editar
                         </a>
+                        @if ($esAdmin)
                         <form method="POST" action="{{ route('product-locations.destroy', $pl) }}"
                             onsubmit="return confirm('¿Eliminar este registro de existencia? Esta acción no se puede deshacer.')">
                             @csrf
@@ -58,6 +72,7 @@
                                 Eliminar
                             </button>
                         </form>
+                        @endif
                     </td>
                 </tr>
                 @empty

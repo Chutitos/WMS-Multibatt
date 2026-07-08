@@ -35,14 +35,18 @@ $esAdmin = auth()->user()->role->name === 'admin';
     ]);
     $ocupada = $contenido->sum('cantidad') > 0;
     @endphp
-    <div class="ubicacion-box absolute select-none rounded-lg border-2 bg-blue-50 shadow-sm flex flex-col items-center justify-center p-2 text-center {{ $esAdmin ? 'cursor-move' : 'cursor-pointer' }} {{ $ocupada ? 'border-blue-400' : 'border-slate-300' }}"
+    <div class="ubicacion-box absolute select-none rounded-lg border-2 shadow-sm flex flex-col items-center justify-center p-2 text-center {{ $esAdmin ? 'cursor-move' : 'cursor-pointer' }} {{ $location->activa ? 'bg-blue-50 ' . ($ocupada ? 'border-blue-400' : 'border-slate-300') : 'bg-slate-200 border-slate-300 opacity-60' }}"
         data-id="{{ $location->id }}"
         data-nombre="{{ $location->nombre }}"
         data-codigo="{{ $location->codigo }}"
+        data-activa="{{ $location->activa ? '1' : '0' }}"
         data-contenido='@json($contenido)'
         style="left: {{ $location->pos_x }}px; top: {{ $location->pos_y }}px; width: {{ $location->width }}px; height: {{ $location->height }}px;">
         <span class="font-semibold text-slate-900 text-sm">{{ $location->nombre }}</span>
         <span class="font-mono text-xs text-slate-500">{{ $location->codigo }}</span>
+        @unless ($location->activa)
+        <span class="text-xs text-red-600 font-semibold">(inactiva)</span>
+        @endunless
         <span class="mt-1 h-2 w-2 rounded-full {{ $ocupada ? 'bg-blue-500' : 'bg-slate-300' }}"></span>
     </div>
     @endforeach
@@ -56,6 +60,11 @@ $esAdmin = auth()->user()->role->name === 'admin';
             <button type="button" id="popover-cerrar" class="text-slate-400 hover:text-slate-700 text-lg leading-none">&times;</button>
         </div>
         <ul id="popover-lista" class="max-h-56 overflow-y-auto px-4 py-2 divide-y divide-slate-100"></ul>
+        @if ($esAdmin)
+        <div class="px-4 py-3 border-t border-slate-200">
+            <button type="button" id="popover-toggle-activa" class="w-full px-3 py-2 rounded-lg text-sm font-semibold"></button>
+        </div>
+        @endif
     </div>
 </div>
 
@@ -74,6 +83,7 @@ $esAdmin = auth()->user()->role->name === 'admin';
         const popoverCodigo = document.getElementById('popover-codigo');
         const popoverLista = document.getElementById('popover-lista');
         const popoverCerrar = document.getElementById('popover-cerrar');
+        const btnToggleActiva = document.getElementById('popover-toggle-activa');
 
         function ocultarPopover() {
             popover.classList.add('hidden');
@@ -109,6 +119,13 @@ $esAdmin = auth()->user()->role->name === 'admin';
                 });
             }
 
+            if (btnToggleActiva) {
+                const activa = box.dataset.activa === '1';
+                btnToggleActiva.textContent = activa ? 'Desactivar ubicación' : 'Activar ubicación';
+                btnToggleActiva.className = 'w-full px-3 py-2 rounded-lg text-sm font-semibold ' +
+                    (activa ? 'bg-red-50 text-red-700 hover:bg-red-100' : 'bg-green-50 text-green-700 hover:bg-green-100');
+            }
+
             const left = Math.min(parseInt(box.style.left, 10), mapa.clientWidth - 300);
             const top = parseInt(box.style.top, 10) + box.offsetHeight + 10;
 
@@ -119,6 +136,25 @@ $esAdmin = auth()->user()->role->name === 'admin';
         }
 
         popoverCerrar.addEventListener('click', ocultarPopover);
+
+        if (btnToggleActiva) {
+            btnToggleActiva.addEventListener('click', function() {
+                const box = document.querySelector(`.ubicacion-box[data-id="${popover.dataset.openFor}"]`);
+                if (!box) return;
+
+                const activar = box.dataset.activa !== '1';
+                const verbo = activar ? 'activar' : 'desactivar';
+                if (!confirm(`¿Seguro que quieres ${verbo} la ubicación "${box.dataset.nombre}"?`)) return;
+
+                window.axios.patch(`/ubicaciones/${box.dataset.id}`, { activa: activar })
+                    .then(function() {
+                        window.location.reload();
+                    })
+                    .catch(function(error) {
+                        alert(error.response?.data?.message || 'No se pudo cambiar el estado de la ubicación.');
+                    });
+            });
+        }
 
         document.addEventListener('click', function(e) {
             if (popover.classList.contains('hidden')) return;
@@ -190,6 +226,7 @@ $esAdmin = auth()->user()->role->name === 'admin';
             div.dataset.id = location.id;
             div.dataset.nombre = location.nombre;
             div.dataset.codigo = location.codigo;
+            div.dataset.activa = '1';
             div.dataset.contenido = '[]';
             div.style.left = location.pos_x + 'px';
             div.style.top = location.pos_y + 'px';

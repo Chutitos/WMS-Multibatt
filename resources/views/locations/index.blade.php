@@ -5,25 +5,19 @@ $esAdmin = auth()->user()->role->name === 'admin';
 @endphp
 
 @section('content')
-<div class="flex items-center justify-between mb-6">
-    <div>
-        <h2 class="text-2xl font-bold text-slate-900">Mapa de bodega</h2>
-        <p class="mt-2 text-sm text-slate-600">
-            @if ($esAdmin)
-            Arrastra las ubicaciones para armar el mapa. Haz clic (sin arrastrar) para ver qué hay guardado en una ubicación.
-            @else
-            Vista de solo lectura. Haz clic en una ubicación para ver qué hay guardado ahí.
-            @endif
-        </p>
-    </div>
-
-    @if ($esAdmin)
-    <button type="button" id="btn-agregar-ubicacion"
-        class="inline-flex items-center px-5 py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700">
-        + Crear estante
-    </button>
-    @endif
-</div>
+<x-wms.page-header title="Mapa de bodega"
+    :subtitle="$esAdmin
+        ? 'Arrastra las ubicaciones para armar el mapa. Haz clic (sin arrastrar) para ver qué hay guardado.'
+        : 'Vista de solo lectura. Haz clic en una ubicación para ver qué hay guardado ahí.'">
+    <x-slot:actions>
+        @if ($esAdmin)
+        <button type="button" id="btn-agregar-ubicacion"
+            class="inline-flex items-center px-5 py-3 bg-blue-600 text-white rounded-xl text-base font-semibold hover:bg-blue-700 transition">
+            + Crear estante
+        </button>
+        @endif
+    </x-slot:actions>
+</x-wms.page-header>
 
 <div id="mapa" class="relative bg-slate-100 border-2 border-dashed border-slate-300 rounded-2xl overflow-auto" style="width: 100%; height: 640px;">
     @foreach ($locations as $location)

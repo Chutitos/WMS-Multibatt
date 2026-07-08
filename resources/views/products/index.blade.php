@@ -1,55 +1,42 @@
 @extends('layouts.wms')
 
 @section('content')
-<div class="flex justify-between items-center mb-6">
-    <div>
-        <h2 class="text-2xl font-bold text-slate-900">Productos</h2>
-        <p class="mt-2 text-sm text-slate-600">
-            Catálogo de productos disponibles para armar órdenes.
-        </p>
-    </div>
+<x-wms.page-header title="Productos" subtitle="Catálogo de productos disponibles para armar órdenes.">
+    <x-slot:actions>
+        <x-wms.btn href="{{ route('products.create') }}">+ Crear producto</x-wms.btn>
+    </x-slot:actions>
+</x-wms.page-header>
 
-    <a href="{{ route('products.create') }}"
-        class="inline-flex items-center px-5 py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700">
-        Crear producto
-    </a>
-</div>
-
-<div class="bg-slate-50 rounded-2xl shadow-sm border border-slate-300 overflow-hidden">
+<div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
     <div class="overflow-x-auto">
-        <table class="min-w-full text-sm">
-            <thead class="bg-slate-100 border-b border-slate-300">
+        <table class="min-w-full text-base">
+            <thead class="bg-slate-50 border-b border-slate-200">
                 <tr>
-                    <th class="p-4 text-left font-semibold text-slate-700">SKU</th>
-                    <th class="p-4 text-left font-semibold text-slate-700">Nombre</th>
-                    <th class="p-4 text-left font-semibold text-slate-700">Estado</th>
-                    <th class="p-4 text-left font-semibold text-slate-700">Acciones</th>
+                    <th class="px-6 py-4 text-left font-semibold text-slate-700">SKU</th>
+                    <th class="px-6 py-4 text-left font-semibold text-slate-700">Nombre</th>
+                    <th class="px-6 py-4 text-left font-semibold text-slate-700">Estado</th>
+                    <th class="px-6 py-4 text-left font-semibold text-slate-700">Acciones</th>
                 </tr>
             </thead>
 
             <tbody class="divide-y divide-slate-200">
                 @forelse ($products as $product)
-                <tr>
-                    <td class="p-4 text-slate-900 font-mono">{{ $product->sku }}</td>
-                    <td class="p-4 text-slate-900">{{ $product->name }}</td>
-                    <td class="p-4">
-                        @if ($product->active)
-                        <span class="inline-flex items-center rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-800">Activo</span>
-                        @else
-                        <span class="inline-flex items-center rounded-full bg-slate-200 px-3 py-1 text-xs font-semibold text-slate-600">Inactivo</span>
-                        @endif
+                <tr class="hover:bg-slate-50 {{ $product->active ? '' : 'opacity-60' }}">
+                    <td class="px-6 py-4 text-slate-900 font-mono">{{ $product->sku }}</td>
+                    <td class="px-6 py-4 text-slate-900 font-semibold">{{ $product->name }}</td>
+                    <td class="px-6 py-4">
+                        <x-wms.badge-activo :activo="$product->active" />
                     </td>
-                    <td class="p-4">
-                        <a href="{{ route('products.edit', $product) }}"
-                            class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700">
-                            Editar
-                        </a>
+                    <td class="px-6 py-4">
+                        <x-wms.btn size="sm" href="{{ route('products.edit', $product) }}">Editar</x-wms.btn>
                     </td>
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="4" class="p-10 text-center text-slate-500">
-                        No hay productos registrados.
+                    <td colspan="4" class="px-6 py-12 text-center">
+                        <div class="text-4xl">🗃️</div>
+                        <p class="mt-3 text-xl font-bold text-slate-700">No hay productos registrados</p>
+                        <p class="mt-1 text-base text-slate-500">Crea el primero con el botón "+ Crear producto".</p>
                     </td>
                 </tr>
                 @endforelse

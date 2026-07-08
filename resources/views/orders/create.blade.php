@@ -1,76 +1,51 @@
 @extends('layouts.wms')
 
 @section('content')
-<div class="mb-6">
-    <h2 class="text-3xl font-bold text-slate-900">Crear orden</h2>
-    <p class="mt-2 text-sm text-slate-600">
-        Ingreso manual de una orden operativa.
-    </p>
-</div>
+<x-wms.page-header title="Crear orden" subtitle="Ingreso manual de una orden operativa." />
 
-@if ($errors->any())
-<div class="max-w-4xl mx-auto mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800">
-    <ul class="list-disc pl-5 space-y-1">
-        @foreach ($errors->all() as $error)
-        <li>{{ $error }}</li>
-        @endforeach
-    </ul>
-</div>
-@endif
+<div class="max-w-4xl mx-auto">
+    <x-wms.errors />
 
-@if ($products->isEmpty())
-<div class="max-w-4xl mx-auto mb-6 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-amber-800">
-    Todavía no hay productos activos en el catálogo.
-    <a href="{{ route('products.create') }}" class="font-semibold underline">Crea un producto</a> antes de armar una orden.
-</div>
-@endif
+    @if ($products->isEmpty())
+    <div class="mb-6 rounded-xl border-2 border-amber-200 bg-amber-50 px-5 py-4 text-amber-800 text-base">
+        Todavía no hay productos activos en el catálogo.
+        <a href="{{ route('products.create') }}" class="font-semibold underline">Crea un producto</a> antes de armar una orden.
+    </div>
+    @endif
 
-<div class="flex justify-center">
-    <div class="w-full max-w-4xl bg-white rounded-2xl shadow-sm border border-slate-300 p-8">
-        <form method="POST" action="{{ route('orders.store') }}" class="space-y-6">
+    <div class="bg-slate-50 rounded-2xl shadow-sm border border-slate-300 p-8">
+        <form method="POST" action="{{ route('orders.store') }}" class="space-y-5">
             @csrf
 
-            <div>
-                <label class="block text-sm font-semibold text-slate-700 mb-2">Cliente</label>
-                <input type="text" name="cliente_nombre"
-                    class="w-full rounded-xl border-slate-300 focus:border-blue-500 focus:ring-blue-500"
-                    required>
-            </div>
+            <x-wms.field label="Cliente" name="cliente_nombre">
+                <x-wms.input type="text" name="cliente_nombre" value="{{ old('cliente_nombre') }}" required />
+            </x-wms.field>
 
-            <div>
-                <label class="block text-sm font-semibold text-slate-700 mb-2">RUT cliente</label>
-                <input type="text" name="rut_cliente"
-                    class="w-full rounded-xl border-slate-300 focus:border-blue-500 focus:ring-blue-500">
-            </div>
+            <x-wms.field label="RUT cliente" name="rut_cliente" :optional="true">
+                <x-wms.input type="text" name="rut_cliente" value="{{ old('rut_cliente') }}" />
+            </x-wms.field>
 
-            <div>
-                <label class="block text-sm font-semibold text-slate-700 mb-2">Tipo de entrega</label>
-                <select name="tipo_entrega"
-                    class="w-full rounded-xl border-slate-300 focus:border-blue-500 focus:ring-blue-500"
-                    required>
+            <x-wms.field label="Tipo de entrega" name="tipo_entrega">
+                <x-wms.select name="tipo_entrega" required>
                     <option value="">Seleccione</option>
-                    <option value="retiro">Retiro</option>
-                    <option value="despacho">Despacho</option>
-                </select>
-            </div>
+                    <option value="retiro" {{ old('tipo_entrega') === 'retiro' ? 'selected' : '' }}>🏬 Retiro en tienda</option>
+                    <option value="despacho" {{ old('tipo_entrega') === 'despacho' ? 'selected' : '' }}>🚚 Despacho a domicilio</option>
+                </x-wms.select>
+            </x-wms.field>
 
-            <div>
-                <label class="block text-sm font-semibold text-slate-700 mb-2">Observaciones</label>
-                <textarea name="observaciones" rows="4"
-                    class="w-full rounded-xl border-slate-300 focus:border-blue-500 focus:ring-blue-500"></textarea>
-            </div>
+            <x-wms.field label="Observaciones" name="observaciones" :optional="true">
+                <x-wms.textarea name="observaciones" rows="3">{{ old('observaciones') }}</x-wms.textarea>
+            </x-wms.field>
 
             <div class="border-t border-slate-200 pt-6">
-                <div class="mb-4">
-                    <h3 class="text-lg font-semibold text-slate-900">Productos</h3>
-                </div>
+                <h3 class="text-xl font-bold text-slate-900 mb-4">Productos de la orden</h3>
 
                 <div id="productos-container" class="space-y-4">
-                    <div class="producto-item grid grid-cols-1 md:grid-cols-12 gap-4 items-end border border-slate-200 rounded-xl p-4">
+                    <div class="producto-item grid grid-cols-1 md:grid-cols-12 gap-4 items-end bg-white border border-slate-200 rounded-xl p-4">
                         <div class="md:col-span-7">
-                            <label class="block text-sm font-semibold text-slate-700 mb-2">Producto</label>
+                            <label class="block text-base font-semibold text-slate-700 mb-2">Producto</label>
                             <select name="productos[0][product_id]"
-                                class="w-full rounded-xl border-slate-300 focus:border-blue-500 focus:ring-blue-500"
+                                class="w-full rounded-xl border-2 border-slate-300 text-lg px-4 py-3 focus:border-blue-500 focus:ring-blue-500"
                                 required>
                                 <option value="">Seleccione un producto</option>
                                 @foreach ($products as $product)
@@ -80,41 +55,32 @@
                         </div>
 
                         <div class="md:col-span-3">
-                            <label class="block text-sm font-semibold text-slate-700 mb-2">Cantidad</label>
+                            <label class="block text-base font-semibold text-slate-700 mb-2">Cantidad</label>
                             <input type="number" name="productos[0][cantidad]"
-                                class="w-full rounded-xl border-slate-300 focus:border-blue-500 focus:ring-blue-500"
+                                class="w-full rounded-xl border-2 border-slate-300 text-lg px-4 py-3 focus:border-blue-500 focus:ring-blue-500"
                                 min="1" required>
                         </div>
 
                         <div class="md:col-span-2">
                             <button type="button"
-                                class="eliminar-producto hidden w-full px-3 py-2 bg-red-50 text-red-600 rounded-lg text-sm font-medium hover:bg-red-100">
+                                class="eliminar-producto hidden w-full px-3 py-3 bg-red-50 text-red-600 rounded-xl text-base font-semibold hover:bg-red-100">
                                 Quitar
                             </button>
                         </div>
                     </div>
                 </div>
 
-                <div class="mt-6 flex justify-center">
+                <div class="mt-6">
                     <button type="button" id="agregar-producto"
-                        class="h-16 w-16 rounded-full border-2 border-slate-400 text-slate-500 flex items-center justify-center hover:border-blue-500 hover:text-blue-600 transition">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14M5 12h14" />
-                        </svg>
+                        class="w-full px-5 py-4 border-2 border-dashed border-slate-400 text-slate-600 rounded-2xl text-lg font-semibold hover:border-blue-500 hover:text-blue-600 transition">
+                        + Agregar otro producto
                     </button>
                 </div>
             </div>
 
             <div class="pt-4 flex items-center gap-3">
-                <button type="submit"
-                    class="inline-flex items-center px-5 py-3 bg-green-600 text-white rounded-xl font-semibold hover:bg-green-700">
-                    Guardar orden
-                </button>
-
-                <a href="{{ route('orders.index') }}"
-                    class="inline-flex items-center px-5 py-3 bg-slate-200 text-slate-800 rounded-xl font-semibold hover:bg-slate-300">
-                    Volver
-                </a>
+                <x-wms.btn variant="success" size="lg">Guardar orden</x-wms.btn>
+                <x-wms.btn variant="secondary" href="{{ route('orders.index') }}">Volver</x-wms.btn>
             </div>
         </form>
     </div>
@@ -167,27 +133,27 @@
             const total = container.querySelectorAll('.producto-item').length;
 
             const nuevo = document.createElement('div');
-            nuevo.className = 'producto-item grid grid-cols-1 md:grid-cols-12 gap-4 items-end border border-slate-200 rounded-xl p-4';
+            nuevo.className = 'producto-item grid grid-cols-1 md:grid-cols-12 gap-4 items-end bg-white border border-slate-200 rounded-xl p-4';
             nuevo.innerHTML = `
                 <div class="md:col-span-7">
-                    <label class="block text-sm font-semibold text-slate-700 mb-2">Producto</label>
+                    <label class="block text-base font-semibold text-slate-700 mb-2">Producto</label>
                     <select name="productos[${total}][product_id]"
-                        class="w-full rounded-xl border-slate-300 focus:border-blue-500 focus:ring-blue-500"
+                        class="w-full rounded-xl border-2 border-slate-300 text-lg px-4 py-3 focus:border-blue-500 focus:ring-blue-500"
                         required>
                         ${construirOpciones()}
                     </select>
                 </div>
 
                 <div class="md:col-span-3">
-                    <label class="block text-sm font-semibold text-slate-700 mb-2">Cantidad</label>
+                    <label class="block text-base font-semibold text-slate-700 mb-2">Cantidad</label>
                     <input type="number" name="productos[${total}][cantidad]"
-                        class="w-full rounded-xl border-slate-300 focus:border-blue-500 focus:ring-blue-500"
+                        class="w-full rounded-xl border-2 border-slate-300 text-lg px-4 py-3 focus:border-blue-500 focus:ring-blue-500"
                         min="1" required>
                 </div>
 
                 <div class="md:col-span-2">
                     <button type="button"
-                        class="eliminar-producto w-full px-3 py-2 bg-red-50 text-red-600 rounded-lg text-sm font-medium hover:bg-red-100">
+                        class="eliminar-producto w-full px-3 py-3 bg-red-50 text-red-600 rounded-xl text-base font-semibold hover:bg-red-100">
                         Quitar
                     </button>
                 </div>

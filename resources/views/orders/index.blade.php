@@ -4,25 +4,17 @@ use App\Enums\OrderStatus;
 @extends('layouts.wms')
 
 @section('content')
-<div class="flex items-center justify-between mb-6">
-    <div>
-        <h2 class="text-3xl font-bold text-slate-900">Órdenes</h2>
-        <p class="mt-2 text-sm text-slate-600">
-            Gestión y seguimiento de órdenes operativas.
-        </p>
-    </div>
-
-    <a href="{{ route('orders.create') }}"
-        class="inline-flex items-center px-5 py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700">
-        Crear orden
-    </a>
-</div>
+<x-wms.page-header title="Órdenes" subtitle="Gestión y seguimiento de órdenes operativas.">
+    <x-slot:actions>
+        <x-wms.btn href="{{ route('orders.create') }}">+ Crear orden</x-wms.btn>
+    </x-slot:actions>
+</x-wms.page-header>
 
 <form method="GET" action="{{ route('orders.index') }}"
     class="mb-6 bg-white rounded-2xl shadow-sm border border-slate-200 p-5 grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
     <div>
-        <label class="block text-xs font-semibold text-slate-700 mb-1">Estado</label>
-        <select name="estado" class="w-full rounded-lg border-slate-300 text-sm focus:border-blue-500 focus:ring-blue-500">
+        <label class="block text-sm font-semibold text-slate-700 mb-2">Estado</label>
+        <select name="estado" class="w-full rounded-xl border-2 border-slate-300 text-base px-3 py-2 focus:border-blue-500 focus:ring-blue-500">
             <option value="">Todos</option>
             @foreach (OrderStatus::cases() as $status)
             <option value="{{ $status->value }}" {{ request('estado') === $status->value ? 'selected' : '' }}>
@@ -33,41 +25,35 @@ use App\Enums\OrderStatus;
     </div>
 
     <div>
-        <label class="block text-xs font-semibold text-slate-700 mb-1">Cliente</label>
+        <label class="block text-sm font-semibold text-slate-700 mb-2">Cliente</label>
         <input type="text" name="cliente" value="{{ request('cliente') }}" placeholder="Nombre del cliente"
-            class="w-full rounded-lg border-slate-300 text-sm focus:border-blue-500 focus:ring-blue-500">
+            class="w-full rounded-xl border-2 border-slate-300 text-base px-3 py-2 focus:border-blue-500 focus:ring-blue-500">
     </div>
 
     <div>
-        <label class="block text-xs font-semibold text-slate-700 mb-1">Desde</label>
+        <label class="block text-sm font-semibold text-slate-700 mb-2">Desde</label>
         <input type="date" name="fecha_desde" value="{{ request('fecha_desde') }}"
-            class="w-full rounded-lg border-slate-300 text-sm focus:border-blue-500 focus:ring-blue-500">
+            class="w-full rounded-xl border-2 border-slate-300 text-base px-3 py-2 focus:border-blue-500 focus:ring-blue-500">
     </div>
 
     <div>
-        <label class="block text-xs font-semibold text-slate-700 mb-1">Hasta</label>
+        <label class="block text-sm font-semibold text-slate-700 mb-2">Hasta</label>
         <input type="date" name="fecha_hasta" value="{{ request('fecha_hasta') }}"
-            class="w-full rounded-lg border-slate-300 text-sm focus:border-blue-500 focus:ring-blue-500">
+            class="w-full rounded-xl border-2 border-slate-300 text-base px-3 py-2 focus:border-blue-500 focus:ring-blue-500">
     </div>
 
     <div class="flex gap-2">
-        <button type="submit"
-            class="inline-flex items-center px-4 py-2 bg-slate-800 text-white text-sm font-semibold rounded-lg hover:bg-slate-900">
-            Filtrar
-        </button>
+        <x-wms.btn variant="dark">Filtrar</x-wms.btn>
 
         @if (request()->filled('estado') || request()->filled('cliente') || request()->filled('fecha_desde') || request()->filled('fecha_hasta'))
-        <a href="{{ route('orders.index') }}"
-            class="inline-flex items-center px-4 py-2 bg-slate-200 text-slate-700 text-sm font-semibold rounded-lg hover:bg-slate-300">
-            Limpiar
-        </a>
+        <x-wms.btn variant="secondary" href="{{ route('orders.index') }}">Limpiar</x-wms.btn>
         @endif
     </div>
 </form>
 
 <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
     <div class="overflow-x-auto">
-        <table class="min-w-full text-sm">
+        <table class="min-w-full text-base">
             <thead class="bg-slate-50 border-b border-slate-200">
                 <tr>
                     <th class="px-6 py-4 text-left font-semibold text-slate-700">ID</th>
@@ -81,37 +67,25 @@ use App\Enums\OrderStatus;
             <tbody class="divide-y divide-slate-200">
                 @forelse ($orders as $order)
                 <tr class="hover:bg-slate-50">
-                    <td class="px-6 py-4 font-medium text-slate-900">
-                        #{{ $order->id }}
+                    <td class="px-6 py-4 font-bold text-slate-900">#{{ $order->id }}</td>
+                    <td class="px-6 py-4 text-slate-900">{{ $order->cliente_nombre }}</td>
+                    <td class="px-6 py-4 text-slate-700">
+                        {{ $order->tipo_entrega === 'retiro' ? '🏬 Retiro' : '🚚 Despacho' }}
                     </td>
-
-                    <td class="px-6 py-4">
-                        {{ $order->cliente_nombre }}
-                    </td>
-
-                    <td class="px-6 py-4 capitalize">
-                        {{ $order->tipo_entrega }}
-                    </td>
-
                     <td class="px-6 py-4">
                         <x-order-status-badge :estado="$order->estado" />
                     </td>
-
+                    <td class="px-6 py-4 capitalize text-slate-700">{{ $order->source_type }}</td>
                     <td class="px-6 py-4">
-                        {{ $order->source_type }}
-                    </td>
-
-                    <td class="px-6 py-4">
-                        <a href="{{ route('orders.show', $order) }}"
-                            class="inline-flex items-center px-3 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700">
-                            Ver
-                        </a>
+                        <x-wms.btn size="sm" href="{{ route('orders.show', $order) }}">Ver</x-wms.btn>
                     </td>
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="6" class="px-6 py-10 text-center text-slate-500">
-                        No hay órdenes registradas.
+                    <td colspan="6" class="px-6 py-12 text-center">
+                        <div class="text-4xl">📋</div>
+                        <p class="mt-3 text-xl font-bold text-slate-700">No hay órdenes con estos filtros</p>
+                        <p class="mt-1 text-base text-slate-500">Prueba limpiando los filtros o crea una orden nueva.</p>
                     </td>
                 </tr>
                 @endforelse

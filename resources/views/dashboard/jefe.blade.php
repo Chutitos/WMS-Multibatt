@@ -2,57 +2,63 @@
 
 @section('content')
 <div class="mb-8">
-    <h2 class="text-3xl font-bold text-blue-900">Inicio - Jefe de Bodega</h2>
-    <p class="mt-2 text-sm text-slate-600">
-        Gestión operativa de órdenes y liberación a bodega.
+    <h2 class="text-3xl font-bold text-blue-900">Hola, {{ auth()->user()->name }}</h2>
+    <p class="mt-2 text-lg text-slate-600">
+        Así está la operación ahora. Toca una tarjeta para ver esas órdenes.
     </p>
 </div>
 
 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-    <div class="bg-slate-50 rounded-2xl shadow-md border border-slate-300 p-6">
-        <div class="text-sm text-slate-500">Órdenes creadas (pendientes de liberar)</div>
-        <div class="mt-3 text-3xl font-bold text-blue-600">{{ $counts['creadas'] }}</div>
-    </div>
+    <x-wms.stat-card
+        :href="route('orders.index', ['estado' => 'creado'])"
+        :valor="$counts['creadas']"
+        titulo="Por liberar"
+        detalle="Creadas, esperando liberación a bodega"
+        color="slate" />
 
-    <div class="bg-slate-50 rounded-2xl shadow-md border border-slate-300 p-6">
-        <div class="text-sm text-slate-500">Liberadas a bodega</div>
-        <div class="mt-3 text-3xl font-bold text-blue-600">{{ $counts['liberadas'] }}</div>
-    </div>
+    <x-wms.stat-card
+        :href="route('orders.index', ['estado' => 'liberado'])"
+        :valor="$counts['liberadas']"
+        titulo="Liberadas"
+        detalle="En manos de bodega, sin comenzar"
+        color="blue" />
 
-    <div class="bg-slate-50 rounded-2xl shadow-md border border-slate-300 p-6">
-        <div class="text-sm text-slate-500">En preparación</div>
-        <div class="mt-3 text-3xl font-bold text-orange-500">{{ $counts['preparando'] }}</div>
-    </div>
+    <x-wms.stat-card
+        :href="route('orders.index', ['estado' => 'preparando'])"
+        :valor="$counts['preparando']"
+        titulo="Preparando"
+        detalle="Bodega las está escaneando"
+        color="orange" />
 
-    <div class="bg-slate-50 rounded-2xl shadow-md border border-slate-300 p-6">
-        <div class="text-sm text-slate-500">Listas para entregar</div>
-        <div class="mt-3 text-3xl font-bold text-green-600">{{ $counts['listas'] }}</div>
-    </div>
+    <x-wms.stat-card
+        :href="route('orders.index', ['estado' => 'listo'])"
+        :valor="$counts['listas']"
+        titulo="Para entregar"
+        detalle="Terminadas, esperando al cliente"
+        color="green" />
 
-    <div class="bg-slate-50 rounded-2xl shadow-md border border-slate-300 p-6">
-        <div class="text-sm text-slate-500">Entregadas</div>
-        <div class="mt-3 text-3xl font-bold text-emerald-600">{{ $counts['entregadas'] }}</div>
-    </div>
+    <x-wms.stat-card
+        :href="route('orders.index', ['estado' => 'entregado'])"
+        :valor="$counts['entregadas']"
+        titulo="Entregadas"
+        detalle="Ciclo completo"
+        color="emerald" />
 
-    <div class="bg-slate-50 rounded-2xl shadow-md border border-slate-300 p-6">
-        <div class="text-sm text-slate-500">Canceladas</div>
-        <div class="mt-3 text-3xl font-bold text-red-500">{{ $counts['canceladas'] }}</div>
-    </div>
+    <x-wms.stat-card
+        :href="route('orders.index', ['estado' => 'cancelado'])"
+        :valor="$counts['canceladas']"
+        titulo="Canceladas"
+        detalle="Anuladas antes de entregarse"
+        color="red" />
 </div>
 
-<div class="mt-6 bg-slate-50 rounded-2xl shadow-md border border-slate-300 p-5">
-    <h3 class="text-lg font-semibold text-blue-900">Accesos rápidos</h3>
+<div class="mt-8 bg-slate-50 border border-slate-300 rounded-2xl p-6">
+    <h3 class="text-xl font-bold text-slate-900">Accesos rápidos</h3>
 
     <div class="mt-4 flex flex-wrap gap-3">
-        <a href="{{ route('orders.create') }}"
-            class="inline-flex items-center px-5 py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700">
-            Crear orden
-        </a>
-
-        <a href="{{ route('orders.index') }}"
-            class="inline-flex items-center px-5 py-3 bg-slate-800 text-white rounded-xl font-semibold hover:bg-slate-900">
-            Ver órdenes
-        </a>
+        <x-wms.btn size="lg" href="{{ route('orders.create') }}">+ Crear orden</x-wms.btn>
+        <x-wms.btn size="lg" variant="dark" href="{{ route('orders.index') }}">Ver todas las órdenes</x-wms.btn>
+        <x-wms.btn size="lg" variant="secondary" href="{{ route('locations.index') }}">Mapa de bodega</x-wms.btn>
     </div>
 </div>
 @endsection

@@ -1,23 +1,15 @@
 @extends('layouts.wms')
 
 @section('content')
-<div class="flex items-center justify-between mb-6">
-    <div>
-        <h2 class="text-2xl font-bold text-slate-900">Historial de existencias</h2>
-        <p class="mt-2 text-sm text-slate-600">
-            Quién creó, editó o eliminó cada registro de existencia y qué cambió.
-        </p>
-    </div>
-
-    <a href="{{ route('product-locations.index') }}"
-        class="inline-flex items-center px-5 py-3 bg-slate-200 text-slate-800 rounded-xl font-semibold hover:bg-slate-300">
-        Volver a existencias
-    </a>
-</div>
+<x-wms.page-header title="Historial de existencias" subtitle="Quién creó, editó o eliminó cada registro de existencia y qué cambió.">
+    <x-slot:actions>
+        <x-wms.btn variant="secondary" href="{{ route('product-locations.index') }}">Volver a existencias</x-wms.btn>
+    </x-slot:actions>
+</x-wms.page-header>
 
 <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
     <div class="overflow-x-auto">
-        <table class="min-w-full text-sm">
+        <table class="min-w-full text-base">
             <thead class="bg-slate-50 border-b border-slate-200">
                 <tr>
                     <th class="px-6 py-4 text-left font-semibold text-slate-700">Fecha</th>
@@ -41,19 +33,21 @@
                             default => 'bg-slate-100 text-slate-700',
                         };
                         @endphp
-                        <span class="inline-flex px-2.5 py-1 rounded-full text-xs font-semibold {{ $badge }}">
+                        <span class="inline-flex px-3 py-1 rounded-full text-sm font-semibold {{ $badge }}">
                             {{ ucfirst($evento->accion) }}
                         </span>
                     </td>
-                    <td class="px-6 py-4 text-slate-900">
+                    <td class="px-6 py-4 text-slate-900 font-semibold">
                         {{ $evento->user?->name ?? 'Usuario eliminado' }}
                     </td>
                     <td class="px-6 py-4 text-slate-700">{{ $evento->detalle }}</td>
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="4" class="px-6 py-10 text-center text-slate-500">
-                        Todavía no hay movimientos registrados.
+                    <td colspan="4" class="px-6 py-12 text-center">
+                        <div class="text-4xl">📒</div>
+                        <p class="mt-3 text-xl font-bold text-slate-700">Todavía no hay movimientos registrados</p>
+                        <p class="mt-1 text-base text-slate-500">Cada vez que alguien cree, edite o elimine una existencia quedará anotado aquí.</p>
                     </td>
                 </tr>
                 @endforelse

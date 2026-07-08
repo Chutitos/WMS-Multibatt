@@ -1,93 +1,39 @@
 @extends('layouts.wms')
 
 @section('content')
-<div class="mb-6">
-    <h2 class="text-2xl font-bold text-slate-900">Crear producto</h2>
-    <p class="mt-2 text-sm text-slate-600">
-        Agrega un producto al catálogo.
-    </p>
-</div>
+<x-wms.page-header title="Crear producto" subtitle="Agrega un producto al catálogo." />
 
-@if ($errors->any())
-<div class="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800">
-    <ul class="list-disc pl-5 space-y-1">
-        @foreach ($errors->all() as $error)
-        <li>{{ $error }}</li>
-        @endforeach
-    </ul>
-</div>
-@endif
+<x-wms.errors />
 
 <div class="max-w-2xl mx-auto bg-slate-50 rounded-2xl shadow-sm border border-slate-300 p-6">
-    <form method="POST" action="{{ route('products.store') }}" class="space-y-4">
+    <form method="POST" action="{{ route('products.store') }}" class="space-y-5">
         @csrf
 
-        <div>
-            <label class="block text-sm font-semibold text-slate-700 mb-2">SKU</label>
-            <input
-                type="text"
-                name="sku"
-                value="{{ old('sku') }}"
-                class="w-full rounded-xl border-slate-300 focus:border-blue-500 focus:ring-blue-500"
-                required>
-            @error('sku')
-            <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
-            @enderror
-        </div>
+        <x-wms.field label="SKU" name="sku">
+            <x-wms.input type="text" name="sku" value="{{ old('sku') }}" required />
+        </x-wms.field>
 
-        <div>
-            <label class="block text-sm font-semibold text-slate-700 mb-2">Código de barras</label>
-            <input
-                type="text"
-                name="barcode"
-                value="{{ old('barcode') }}"
-                placeholder="Opcional — el que lee la pistola"
-                class="w-full rounded-xl border-slate-300 focus:border-blue-500 focus:ring-blue-500">
-            @error('barcode')
-            <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
-            @enderror
-        </div>
+        <x-wms.field label="Código de barras" name="barcode" :optional="true" hint="El que lee la pistola escaneadora.">
+            <x-wms.input type="text" name="barcode" value="{{ old('barcode') }}" />
+        </x-wms.field>
 
-        <div>
-            <label class="block text-sm font-semibold text-slate-700 mb-2">Nombre</label>
-            <input
-                type="text"
-                name="name"
-                value="{{ old('name') }}"
-                class="w-full rounded-xl border-slate-300 focus:border-blue-500 focus:ring-blue-500"
-                required>
-            @error('name')
-            <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
-            @enderror
-        </div>
+        <x-wms.field label="Nombre" name="name">
+            <x-wms.input type="text" name="name" value="{{ old('name') }}" required />
+        </x-wms.field>
 
-        <div>
-            <label class="block text-sm font-semibold text-slate-700 mb-2">Descripción</label>
-            <textarea name="description" rows="3"
-                class="w-full rounded-xl border-slate-300 focus:border-blue-500 focus:ring-blue-500">{{ old('description') }}</textarea>
-            @error('description')
-            <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
-            @enderror
-        </div>
+        <x-wms.field label="Descripción" name="description" :optional="true">
+            <x-wms.textarea name="description" rows="3">{{ old('description') }}</x-wms.textarea>
+        </x-wms.field>
 
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-3">
             <input type="checkbox" name="active" id="active" value="1" {{ old('active', true) ? 'checked' : '' }}
-                class="rounded border-slate-300 text-blue-600 focus:ring-blue-500">
-            <label for="active" class="text-sm font-semibold text-slate-700">Activo (visible al crear órdenes)</label>
+                class="w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500">
+            <label for="active" class="text-base font-semibold text-slate-700 cursor-pointer">Activo (visible al crear órdenes)</label>
         </div>
 
         <div class="pt-4 flex items-center gap-3">
-            <button
-                type="submit"
-                class="inline-flex items-center px-5 py-3 bg-green-600 text-white rounded-xl font-semibold hover:bg-green-700">
-                Guardar producto
-            </button>
-
-            <a
-                href="{{ route('products.index') }}"
-                class="inline-flex items-center px-5 py-3 bg-slate-200 text-slate-800 rounded-xl font-semibold hover:bg-slate-300">
-                Volver
-            </a>
+            <x-wms.btn variant="success">Guardar producto</x-wms.btn>
+            <x-wms.btn variant="secondary" href="{{ route('products.index') }}">Volver</x-wms.btn>
         </div>
     </form>
 </div>

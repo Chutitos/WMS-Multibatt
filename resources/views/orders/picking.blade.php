@@ -43,12 +43,14 @@ $todoCompleto = $order->items->every(
 
             <div class="flex-1">
                 <div class="text-xl font-bold text-slate-900">{{ $item->producto_nombre }}</div>
-                <div class="mt-1 text-lg text-slate-600">
+                <div class="mt-1 text-lg text-slate-600 ubicacion-sugerida">
                     @if (! $item->product_id)
                     <span class="text-slate-400">Producto sin catálogo — se confirma solo al final</span>
                     @elseif (isset($sugerencias[$item->id]) && $sugerencias[$item->id])
                     📍 Tómalo de: <strong class="text-slate-900">{{ $sugerencias[$item->id]->warehouseLocation->nombre }}</strong>
                     <span class="font-mono text-base text-slate-500">({{ $sugerencias[$item->id]->warehouseLocation->codigo }})</span>
+                    <a href="{{ route('locations.index', ['destacar' => $sugerencias[$item->id]->warehouse_location_id]) }}"
+                        class="ml-2 text-blue-600 underline text-base font-semibold whitespace-nowrap">Ver en el mapa</a>
                     @elseif ($completoItem)
                     <span class="text-green-700">Ya está completo</span>
                     @else
@@ -126,6 +128,24 @@ $todoCompleto = $order->items->every(
                     const fila = document.querySelector(`.fila-item[data-item-id="${data.item_id}"]`);
                     if (fila) {
                         fila.querySelector('.cantidad-progreso').textContent = data.cantidad_confirmada;
+
+                        // El estante sugerido puede cambiar tras cada escaneo
+                        // (FIFO: si el lote se agotó, la siguiente unidad está
+                        // en otro estante). Se actualiza sin recargar.
+                        const linea = fila.querySelector('.ubicacion-sugerida');
+                        if (linea) {
+                            if (data.completo) {
+                                linea.innerHTML = '<span class="text-green-700">Ya está completo</span>';
+                            } else if (data.siguiente_ubicacion) {
+                                const u = data.siguiente_ubicacion;
+                                linea.innerHTML = `📍 Tómalo de: <strong class="text-slate-900">${u.nombre}</strong>
+                                    <span class="font-mono text-base text-slate-500">(${u.codigo})</span>
+                                    <a href="{{ route('locations.index') }}?destacar=${u.id}"
+                                        class="ml-2 text-blue-600 underline text-base font-semibold whitespace-nowrap">Ver en el mapa</a>`;
+                            } else {
+                                linea.innerHTML = '<span class="text-red-600 font-semibold">⚠ Sin existencia registrada en ningún estante</span>';
+                            }
+                        }
 
                         if (data.completo) {
                             fila.dataset.completo = '1';

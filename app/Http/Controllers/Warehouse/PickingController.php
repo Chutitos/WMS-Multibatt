@@ -104,12 +104,32 @@ class PickingController extends Controller
                     'user_id' => $request->user()->id,
                 ]);
 
+                $completo = $item->cantidad_confirmada >= $item->cantidad_solicitada;
+
+                // Recalcular FIFO después de descontar: si este estante quedó
+                // vacío, la siguiente unidad puede estar en otro, y el operario
+                // debe saberlo sin recargar la pantalla.
+                $siguiente = $completo
+                    ? null
+                    : ProductLocation::disponibleFifo($product->id)->with('warehouseLocation')->first();
+
+                $mensaje = "{$item->producto_nombre} confirmado ({$item->cantidad_confirmada} de {$item->cantidad_solicitada}) — tomado de {$location->warehouseLocation->nombre}.";
+
+                if ($siguiente && $siguiente->warehouse_location_id !== $location->warehouse_location_id) {
+                    $mensaje .= " Siguiente unidad en {$siguiente->warehouseLocation->nombre} ({$siguiente->warehouseLocation->codigo}).";
+                }
+
                 return [
-                    'message' => "{$item->producto_nombre} confirmado desde {$location->warehouseLocation->nombre}.",
+                    'message' => $mensaje,
                     'item_id' => $item->id,
                     'cantidad_confirmada' => $item->cantidad_confirmada,
                     'cantidad_solicitada' => $item->cantidad_solicitada,
-                    'completo' => $item->cantidad_confirmada >= $item->cantidad_solicitada,
+                    'completo' => $completo,
+                    'siguiente_ubicacion' => $siguiente ? [
+                        'id' => $siguiente->warehouse_location_id,
+                        'nombre' => $siguiente->warehouseLocation->nombre,
+                        'codigo' => $siguiente->warehouseLocation->codigo,
+                    ] : null,
                 ];
             });
         } catch (ValidationException $e) {

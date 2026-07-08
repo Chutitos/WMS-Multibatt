@@ -242,6 +242,22 @@ $esAdmin = auth()->user()->role->name === 'admin';
 
         document.querySelectorAll('.ubicacion-box').forEach(activarCaja);
 
+        // Llegada desde picking ("Ver en el mapa"): destaca el estante donde
+        // está el producto, lo centra y abre su contenido.
+        const destacarId = new URLSearchParams(window.location.search).get('destacar');
+        if (destacarId) {
+            const boxDestacada = document.querySelector(`.ubicacion-box[data-id="${destacarId}"]`);
+            if (boxDestacada) {
+                boxDestacada.classList.add('ring-4', 'ring-amber-400', 'animate-pulse');
+                boxDestacada.scrollIntoView({ block: 'center', inline: 'center', behavior: 'smooth' });
+                mostrarPopover(boxDestacada);
+
+                setTimeout(function() {
+                    boxDestacada.classList.remove('animate-pulse');
+                }, 4000);
+            }
+        }
+
         if (esAdmin && btnAgregar) {
             btnAgregar.addEventListener('click', function() {
                 // Un clic crea el estante con nombre/código automáticos

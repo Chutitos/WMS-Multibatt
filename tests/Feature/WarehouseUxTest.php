@@ -153,6 +153,71 @@ class WarehouseUxTest extends TestCase
             ->assertSee('Confirmar que está lista');
     }
 
+    public function test_picking_muestra_link_al_mapa_del_estante_sugerido(): void
+    {
+        $bodeguero = $this->makeUser('bodeguero');
+        $product = $this->makeProduct();
+        $estante = $this->makeLocation(['nombre' => 'Estante 9']);
+        $this->stockProductAt($product, $estante, 10);
+        $order = $this->makeOrder($bodeguero, $product, OrderStatus::PREPARANDO, solicitada: 2);
+
+        $this->actingAs($bodeguero)->get("/orders/{$order->id}/picking")
+            ->assertOk()
+            ->assertSee('Ver en el mapa')
+            ->assertSee("destacar={$estante->id}", false);
+    }
+
+    public function test_escanear_avisa_cuando_la_siguiente_unidad_esta_en_otro_estante(): void
+    {
+        $bodeguero = $this->makeUser('bodeguero');
+        $product = $this->makeProduct(['barcode' => 'BAT-777']);
+        $estanteViejo = $this->makeLocation(['nombre' => 'Estante A']);
+        $estanteNuevo = $this->makeLocation(['nombre' => 'Estante B']);
+
+        // FIFO: queda 1 unidad en el estante más antiguo y el resto en otro.
+        $this->stockProductAt($product, $estanteViejo, 1, now()->subDays(10)->toDateString());
+        $this->stockProductAt($product, $estanteNuevo, 5, now()->toDateString());
+
+        $order = $this->makeOrder($bodeguero, $product, OrderStatus::PREPARANDO, solicitada: 2);
+
+        $respuesta = $this->actingAs($bodeguero)
+            ->postJson("/orders/{$order->id}/picking/escanear", ['codigo' => 'BAT-777']);
+
+        $respuesta->assertOk()
+            ->assertJsonPath('completo', false)
+            ->assertJsonPath('siguiente_ubicacion.nombre', 'Estante B')
+            ->assertJsonPath('siguiente_ubicacion.id', $estanteNuevo->id);
+
+        $this->assertStringContainsString('tomado de Estante A', $respuesta->json('message'));
+        $this->assertStringContainsString('Siguiente unidad en Estante B', $respuesta->json('message'));
+    }
+
+    public function test_escanear_ultima_unidad_no_sugiere_siguiente_estante(): void
+    {
+        $bodeguero = $this->makeUser('bodeguero');
+        $product = $this->makeProduct(['barcode' => 'BAT-888']);
+        $estante = $this->makeLocation();
+        $this->stockProductAt($product, $estante, 5);
+
+        $order = $this->makeOrder($bodeguero, $product, OrderStatus::PREPARANDO, solicitada: 1);
+
+        $this->actingAs($bodeguero)
+            ->postJson("/orders/{$order->id}/picking/escanear", ['codigo' => 'BAT-888'])
+            ->assertOk()
+            ->assertJsonPath('completo', true)
+            ->assertJsonPath('siguiente_ubicacion', null);
+    }
+
+    public function test_mapa_renderiza_con_parametro_destacar(): void
+    {
+        $bodeguero = $this->makeUser('bodeguero');
+        $estante = $this->makeLocation(['nombre' => 'Estante destacable']);
+
+        $this->actingAs($bodeguero)->get("/ubicaciones?destacar={$estante->id}")
+            ->assertOk()
+            ->assertSee('Estante destacable');
+    }
+
     public function test_pantalla_para_entregar_muestra_boton_entregar(): void
     {
         $bodeguero = $this->makeUser('bodeguero');

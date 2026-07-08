@@ -14,7 +14,6 @@ class DashboardController extends Controller
 
         if (in_array($user->role->name, ['admin', 'jefe_bodega'], true)) {
             $counts = [
-                'creadas' => Order::where('estado', OrderStatus::CREADO)->count(),
                 'liberadas' => Order::where('estado', OrderStatus::LIBERADO)->count(),
                 'preparando' => Order::where('estado', OrderStatus::PREPARANDO)->count(),
                 'listas' => Order::where('estado', OrderStatus::LISTO)->count(),

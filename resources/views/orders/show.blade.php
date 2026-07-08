@@ -5,113 +5,104 @@ use App\Enums\OrderStatus;
 
 @section('content')
 <div class="mb-6">
-    <h2 class="text-3xl font-bold text-slate-900">Orden #{{ $order->id }}</h2>
-    <p class="mt-2 text-sm text-slate-600">
-        Detalle completo de la orden operativa.
+    <div class="flex items-center gap-3 flex-wrap">
+        <h2 class="text-3xl font-bold text-slate-900">Orden #{{ $order->id }}</h2>
+        <x-order-status-badge :estado="$order->estado" class="text-sm px-4 py-1.5" />
+    </div>
+    <p class="mt-2 text-xl text-slate-700">
+        {{ $order->cliente_nombre }}
+        <span class="text-lg text-slate-500">
+            · {{ $order->tipo_entrega === 'retiro' ? '🏬 Retiro en tienda' : '🚚 Despacho a domicilio' }}
+        </span>
     </p>
 </div>
 
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-    <div class="bg-slate-50 rounded-2xl shadow-sm border border-slate-300 p-6">
-        <h3 class="text-lg font-semibold text-slate-900 mb-4">Datos generales</h3>
+    <div class="bg-slate-50 rounded-2xl border border-slate-200 p-6">
+        <h3 class="text-xl font-bold text-slate-900 mb-4">Datos de la orden</h3>
 
-        <div class="space-y-3 text-sm">
-            <div>
-                <span class="font-semibold text-slate-700">Cliente:</span>
-                <span class="text-slate-900">{{ $order->cliente_nombre }}</span>
+        <dl class="space-y-3 text-base">
+            <div class="flex justify-between gap-4">
+                <dt class="font-semibold text-slate-600">RUT cliente</dt>
+                <dd class="text-slate-900 text-right">{{ $order->rut_cliente ?: '—' }}</dd>
             </div>
-
-            <div>
-                <span class="font-semibold text-slate-700">RUT:</span>
-                <span class="text-slate-900">{{ $order->rut_cliente ?: '-' }}</span>
+            <div class="flex justify-between gap-4">
+                <dt class="font-semibold text-slate-600">Creada por</dt>
+                <dd class="text-slate-900 text-right">{{ $order->creator->name ?? '—' }}</dd>
             </div>
-
-            <div>
-                <span class="font-semibold text-slate-700">Tipo de entrega:</span>
-                <span class="text-slate-900 capitalize">{{ $order->tipo_entrega }}</span>
+            <div class="flex justify-between gap-4">
+                <dt class="font-semibold text-slate-600">Fecha creación</dt>
+                <dd class="text-slate-900 text-right">{{ $order->created_at?->format('d-m-Y H:i') }}</dd>
             </div>
-
-            <div>
-                <span class="font-semibold text-slate-700">Estado:</span>
-<x-order-status-badge :estado="$order->estado" />
-            </div>
-
-            <div>
-                <span class="font-semibold text-slate-700">Creada por:</span>
-                <span class="text-slate-900">{{ $order->creator->name ?? '-' }}</span>
-            </div>
-
-            <div>
-                <span class="font-semibold text-slate-700">Fecha creación:</span>
-                <span class="text-slate-900">{{ $order->created_at?->format('d-m-Y H:i') }}</span>
-            </div>
-
-            <div>
-                <span class="font-semibold text-slate-700">Liberada por:</span>
-                <span class="text-slate-900">{{ $order->releaser->name ?? '-' }}</span>
-            </div>
-
-            <div>
-                <span class="font-semibold text-slate-700">Fecha liberación:</span>
-                <span class="text-slate-900">
-                    {{ $order->fecha_liberacion ? $order->fecha_liberacion->format('d-m-Y H:i') : '-' }}
-                </span>
+            <div class="flex justify-between gap-4">
+                <dt class="font-semibold text-slate-600">Enviada a bodega</dt>
+                <dd class="text-slate-900 text-right">
+                    {{ $order->fecha_liberacion ? $order->fecha_liberacion->format('d-m-Y H:i') : '—' }}
+                </dd>
             </div>
 
             @if ($order->estado === OrderStatus::ENTREGADO)
                 @if ($order->tipo_entrega === 'retiro')
-                <div>
-                    <span class="font-semibold text-slate-700">Retirado por:</span>
-                    <span class="text-slate-900">{{ $order->retirado_por_nombre }}</span>
-                    @if ($order->retirado_por_rut)
-                    <span class="text-slate-500">({{ $order->retirado_por_rut }})</span>
-                    @endif
+                <div class="flex justify-between gap-4">
+                    <dt class="font-semibold text-slate-600">Retirado por</dt>
+                    <dd class="text-slate-900 text-right">
+                        {{ $order->retirado_por_nombre }}
+                        @if ($order->retirado_por_rut)
+                        <span class="text-slate-500">({{ $order->retirado_por_rut }})</span>
+                        @endif
+                    </dd>
                 </div>
                 @else
-                <div>
-                    <span class="font-semibold text-slate-700">Transportista:</span>
-                    <span class="text-slate-900">{{ $order->transportista }}</span>
+                <div class="flex justify-between gap-4">
+                    <dt class="font-semibold text-slate-600">Transportista</dt>
+                    <dd class="text-slate-900 text-right">{{ $order->transportista }}</dd>
                 </div>
                 @if ($order->guia_despacho)
-                <div>
-                    <span class="font-semibold text-slate-700">N° de guía:</span>
-                    <span class="text-slate-900">{{ $order->guia_despacho }}</span>
+                <div class="flex justify-between gap-4">
+                    <dt class="font-semibold text-slate-600">N° de guía</dt>
+                    <dd class="text-slate-900 text-right">{{ $order->guia_despacho }}</dd>
                 </div>
                 @endif
                 @endif
             @endif
-        </div>
+        </dl>
     </div>
 
-    <div class="bg-slate-50 rounded-2xl shadow-sm border border-slate-300 p-6">
-        <h3 class="text-lg font-semibold text-slate-900 mb-4">Observaciones</h3>
-
-        <div class="text-sm text-slate-700 min-h-[120px]">
+    <div class="bg-slate-50 rounded-2xl border border-slate-200 p-6">
+        <h3 class="text-xl font-bold text-slate-900 mb-4">Observaciones</h3>
+        <p class="text-base text-slate-700">
             {{ $order->observaciones ?: 'Sin observaciones.' }}
-        </div>
+        </p>
     </div>
 </div>
 
-<div class="mt-6 bg-slate-50 rounded-2xl shadow-sm border border-slate-300 overflow-hidden">
-    <div class="px-6 py-4 border-b border-slate-300">
-        <h3 class="text-lg font-semibold text-slate-900">Productos</h3>
+<div class="mt-6 bg-white rounded-2xl border border-slate-200 overflow-hidden">
+    <div class="px-6 py-4 border-b border-slate-200 bg-slate-50">
+        <h3 class="text-xl font-bold text-slate-900">Productos</h3>
     </div>
 
     <div class="overflow-x-auto">
-        <table class="min-w-full text-sm">
-            <thead class="bg-slate-100 border-b border-slate-300">
+        <table class="min-w-full text-base">
+            <thead class="bg-slate-50 border-b border-slate-200">
                 <tr>
                     <th class="px-6 py-4 text-left font-semibold text-slate-700">Producto</th>
-                    <th class="px-6 py-4 text-left font-semibold text-slate-700">Cantidad solicitada</th>
-                    <th class="px-6 py-4 text-left font-semibold text-slate-700">Cantidad confirmada</th>
+                    <th class="px-6 py-4 text-center font-semibold text-slate-700">Pedidas</th>
+                    <th class="px-6 py-4 text-center font-semibold text-slate-700">Confirmadas</th>
+                    <th class="px-6 py-4 text-left font-semibold text-slate-700"></th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-slate-200">
                 @foreach ($order->items as $item)
-                <tr>
-                    <td class="px-6 py-4 text-slate-900">{{ $item->producto_nombre }}</td>
-                    <td class="px-6 py-4 text-slate-900">{{ $item->cantidad_solicitada }}</td>
-                    <td class="px-6 py-4 text-slate-900">{{ $item->cantidad_confirmada }}</td>
+                @php $itemCompleto = $item->cantidad_confirmada >= $item->cantidad_solicitada; @endphp
+                <tr class="{{ $itemCompleto && $order->estado !== OrderStatus::CANCELADO ? 'bg-green-50/50' : '' }}">
+                    <td class="px-6 py-4 text-slate-900 font-semibold">{{ $item->producto_nombre }}</td>
+                    <td class="px-6 py-4 text-center text-slate-900 font-bold">{{ $item->cantidad_solicitada }}</td>
+                    <td class="px-6 py-4 text-center font-bold {{ $itemCompleto ? 'text-green-600' : 'text-slate-900' }}">
+                        {{ $item->cantidad_confirmada }}
+                    </td>
+                    <td class="px-6 py-4 text-green-600 font-semibold">
+                        {{ $itemCompleto && $order->estado !== OrderStatus::CANCELADO ? '✅' : '' }}
+                    </td>
                 </tr>
                 @endforeach
             </tbody>
@@ -119,42 +110,7 @@ use App\Enums\OrderStatus;
     </div>
 </div>
 
-<div class="mt-6 bg-slate-50 rounded-2xl shadow-sm border border-slate-300 overflow-hidden">
-    <div class="px-6 py-4 border-b border-slate-300">
-        <h3 class="text-lg font-semibold text-slate-900">Historial de eventos</h3>
-    </div>
-
-    <div class="overflow-x-auto">
-        <table class="min-w-full text-sm">
-            <thead class="bg-slate-100 border-b border-slate-300">
-                <tr>
-                    <th class="px-6 py-4 text-left font-semibold text-slate-700">Evento</th>
-                    <th class="px-6 py-4 text-left font-semibold text-slate-700">Descripción</th>
-                    <th class="px-6 py-4 text-left font-semibold text-slate-700">Usuario</th>
-                    <th class="px-6 py-4 text-left font-semibold text-slate-700">Fecha</th>
-                </tr>
-            </thead>
-            <tbody class="divide-y divide-slate-200">
-                @forelse ($order->events as $event)
-                <tr>
-                    <td class="px-6 py-4 capitalize text-slate-900">{{ $event->tipo_evento }}</td>
-                    <td class="px-6 py-4 text-slate-700">{{ $event->descripcion }}</td>
-                    <td class="px-6 py-4 text-slate-900">{{ $event->user->name ?? '-' }}</td>
-                    <td class="px-6 py-4 text-slate-700">{{ $event->created_at->format('d-m-Y H:i') }}</td>
-                </tr>
-                @empty
-                <tr>
-                    <td colspan="4" class="px-6 py-6 text-center text-slate-500">
-                        Sin eventos registrados.
-                    </td>
-                </tr>
-                @endforelse
-            </tbody>
-        </table>
-    </div>
-</div>
-
-<div class="mt-6 flex items-center gap-3">
+<div class="mt-6 flex items-center gap-3 flex-wrap">
     @php
         $volverRuta = 'orders.index';
 
@@ -168,28 +124,18 @@ use App\Enums\OrderStatus;
         }
     @endphp
 
-    <a href="{{ route($volverRuta) }}"
-        class="inline-flex items-center px-6 py-4 bg-slate-200 text-slate-800 text-lg rounded-2xl font-semibold hover:bg-slate-300">
-        ← Volver
-    </a>
+    <x-wms.btn size="lg" variant="secondary" href="{{ route($volverRuta) }}">← Volver</x-wms.btn>
 
     @can('liberar', $order)
     <form method="POST" action="{{ route('orders.liberar', $order) }}">
         @csrf
         @method('PATCH')
-
-        <button type="submit"
-            class="inline-flex items-center px-6 py-4 bg-blue-600 text-white text-lg rounded-2xl font-bold hover:bg-blue-700">
-            Liberar orden
-        </button>
+        <x-wms.btn size="lg">Enviar a bodega</x-wms.btn>
     </form>
     @endcan
 
     @can('confirmar', $order)
-    <a href="{{ route('orders.picking', $order) }}"
-        class="inline-flex items-center px-6 py-4 bg-blue-600 text-white text-lg rounded-2xl font-bold hover:bg-blue-700">
-        📷 Ir a escanear productos
-    </a>
+    <x-wms.btn size="lg" href="{{ route('orders.picking', $order) }}">📷 Ir a escanear productos</x-wms.btn>
     @endcan
 
     @can('cancelar', $order)
@@ -197,11 +143,7 @@ use App\Enums\OrderStatus;
         onsubmit="return confirm('¿Seguro que quieres cancelar esta orden? Esta acción no se puede deshacer.')">
         @csrf
         @method('PATCH')
-
-        <button type="submit"
-            class="inline-flex items-center px-6 py-4 bg-red-600 text-white text-lg rounded-2xl font-bold hover:bg-red-700">
-            Cancelar orden
-        </button>
+        <x-wms.btn size="lg" variant="danger">Cancelar orden</x-wms.btn>
     </form>
     @endcan
 </div>
@@ -222,40 +164,58 @@ use App\Enums\OrderStatus;
         @method('PATCH')
 
         @if ($order->tipo_entrega === 'retiro')
-        <div>
-            <label class="block text-base font-semibold text-slate-700 mb-2">Nombre de quién retira</label>
-            <input type="text" name="retirado_por_nombre" value="{{ old('retirado_por_nombre') }}" required
-                class="w-full rounded-xl border-2 border-slate-300 text-lg px-4 py-3 focus:border-green-500 focus:ring-green-500">
-            @error('retirado_por_nombre')
-            <p class="mt-2 text-base text-red-600">{{ $message }}</p>
-            @enderror
-        </div>
-        <div>
-            <label class="block text-base font-semibold text-slate-700 mb-2">RUT (opcional)</label>
-            <input type="text" name="retirado_por_rut" value="{{ old('retirado_por_rut') }}"
-                class="w-full rounded-xl border-2 border-slate-300 text-lg px-4 py-3 focus:border-green-500 focus:ring-green-500">
-        </div>
+        <x-wms.field label="Nombre de quién retira" name="retirado_por_nombre">
+            <x-wms.input type="text" name="retirado_por_nombre" value="{{ old('retirado_por_nombre') }}" required />
+        </x-wms.field>
+
+        <x-wms.field label="RUT" name="retirado_por_rut" :optional="true">
+            <x-wms.input type="text" name="retirado_por_rut" value="{{ old('retirado_por_rut') }}" />
+        </x-wms.field>
         @else
-        <div>
-            <label class="block text-base font-semibold text-slate-700 mb-2">Transportista</label>
-            <input type="text" name="transportista" value="{{ old('transportista') }}" required
-                class="w-full rounded-xl border-2 border-slate-300 text-lg px-4 py-3 focus:border-green-500 focus:ring-green-500">
-            @error('transportista')
-            <p class="mt-2 text-base text-red-600">{{ $message }}</p>
-            @enderror
-        </div>
-        <div>
-            <label class="block text-base font-semibold text-slate-700 mb-2">N° de guía (opcional)</label>
-            <input type="text" name="guia_despacho" value="{{ old('guia_despacho') }}"
-                class="w-full rounded-xl border-2 border-slate-300 text-lg px-4 py-3 focus:border-green-500 focus:ring-green-500">
-        </div>
+        <x-wms.field label="Transportista" name="transportista">
+            <x-wms.input type="text" name="transportista" value="{{ old('transportista') }}" required />
+        </x-wms.field>
+
+        <x-wms.field label="N° de guía" name="guia_despacho" :optional="true">
+            <x-wms.input type="text" name="guia_despacho" value="{{ old('guia_despacho') }}" />
+        </x-wms.field>
         @endif
 
-        <button type="submit"
-            class="w-full px-6 py-5 bg-green-600 text-white text-xl font-bold rounded-2xl hover:bg-green-700 shadow-sm">
-            🤝 Confirmar entrega
-        </button>
+        <x-wms.btn size="xl" variant="success">🤝 Confirmar entrega</x-wms.btn>
     </form>
 </div>
 @endcan
+
+<div class="mt-6 bg-white rounded-2xl border border-slate-200 overflow-hidden">
+    <div class="px-6 py-4 border-b border-slate-200 bg-slate-50">
+        <h3 class="text-xl font-bold text-slate-900">Historial de la orden</h3>
+    </div>
+
+    <div class="overflow-x-auto">
+        <table class="min-w-full text-base">
+            <thead class="bg-slate-50 border-b border-slate-200">
+                <tr>
+                    <th class="px-6 py-4 text-left font-semibold text-slate-700">Fecha</th>
+                    <th class="px-6 py-4 text-left font-semibold text-slate-700">Evento</th>
+                    <th class="px-6 py-4 text-left font-semibold text-slate-700">Descripción</th>
+                    <th class="px-6 py-4 text-left font-semibold text-slate-700">Usuario</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-200">
+                @forelse ($order->events as $event)
+                <tr class="hover:bg-slate-50">
+                    <td class="px-6 py-4 text-slate-700 whitespace-nowrap">{{ $event->created_at->format('d-m-Y H:i') }}</td>
+                    <td class="px-6 py-4 capitalize text-slate-900 font-semibold">{{ $event->tipo_evento }}</td>
+                    <td class="px-6 py-4 text-slate-700">{{ $event->descripcion }}</td>
+                    <td class="px-6 py-4 text-slate-700">{{ $event->user->name ?? '—' }}</td>
+                </tr>
+                @empty
+                <tr>
+                    <td colspan="4" class="px-6 py-8 text-center text-slate-500">Sin eventos registrados.</td>
+                </tr>
+                @endforelse
+            </tbody>
+        </table>
+    </div>
+</div>
 @endsection

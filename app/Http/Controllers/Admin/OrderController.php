@@ -53,17 +53,20 @@ class OrderController extends Controller
         DB::beginTransaction();
 
         try {
+            // Las órdenes nacen liberadas: quien las crea (admin/jefe) ya
+            // decidió que van a bodega, así que aparecen de inmediato en
+            // "Por preparar" sin el paso manual de liberación.
             $order = Order::create([
                 'source_type' => 'manual',
                 'source_reference' => null,
                 'cliente_nombre' => $validated['cliente_nombre'],
                 'rut_cliente' => $validated['rut_cliente'] ?? null,
                 'tipo_entrega' => $validated['tipo_entrega'],
-                'estado' => OrderStatus::CREADO,
+                'estado' => OrderStatus::LIBERADO,
                 'observaciones' => $validated['observaciones'] ?? null,
                 'creado_por' => $request->user()->id,
-                'liberado_por' => null,
-                'fecha_liberacion' => null,
+                'liberado_por' => $request->user()->id,
+                'fecha_liberacion' => now(),
             ]);
 
             foreach ($validated['productos'] as $producto) {
@@ -86,9 +89,17 @@ class OrderController extends Controller
                 'user_id' => $request->user()->id,
             ]);
 
+            OrderEvent::create([
+                'order_id' => $order->id,
+                'tipo_evento' => 'liberado',
+                'descripcion' => 'Orden liberada automáticamente a bodega al crearse.',
+                'user_id' => $request->user()->id,
+            ]);
+
             DB::commit();
 
-            return redirect()->route('orders.index')->with('success', 'Orden creada correctamente.');
+            return redirect()->route('orders.index')
+                ->with('success', 'Orden creada. Ya está en bodega, en "Por preparar".');
         } catch (\Exception $e) {
             DB::rollBack();
 

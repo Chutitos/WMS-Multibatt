@@ -10,16 +10,9 @@
 
 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
     <x-wms.stat-card
-        :href="route('orders.index', ['estado' => 'creado'])"
-        :valor="$counts['creadas']"
-        titulo="Por liberar"
-        detalle="Creadas, esperando liberación a bodega"
-        color="slate" />
-
-    <x-wms.stat-card
         :href="route('orders.index', ['estado' => 'liberado'])"
         :valor="$counts['liberadas']"
-        titulo="Liberadas"
+        titulo="Por preparar"
         detalle="En manos de bodega, sin comenzar"
         color="blue" />
 

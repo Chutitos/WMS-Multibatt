@@ -35,7 +35,7 @@ class StandardUiTest extends TestCase
 
         $this->actingAs($jefe)->get('/dashboard')
             ->assertOk()
-            ->assertSee('Por liberar')
+            ->assertSee('Por preparar')
             ->assertSee('Para entregar')
             ->assertSee('Crear orden');
     }

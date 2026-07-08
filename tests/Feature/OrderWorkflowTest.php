@@ -33,17 +33,15 @@ class OrderWorkflowTest extends TestCase
             ],
         ])->assertRedirect(route('orders.index'));
 
+        // Las órdenes nacen liberadas: van directo a "Por preparar".
         $order = Order::latest('id')->first();
-        $this->assertSame('creado', $order->estado->value);
+        $this->assertSame('liberado', $order->estado->value);
+        $this->assertNotNull($order->fecha_liberacion);
+        $this->assertSame($jefe->id, $order->liberado_por);
 
-        // Bodeguero no puede ver la orden mientras está en "creado".
-        $this->actingAs($bodeguero)->get("/orders/{$order->id}")->assertForbidden();
-
-        $this->actingAs($jefe)->patch("/orders/{$order->id}/liberar")->assertRedirect();
-        $this->assertSame('liberado', $order->fresh()->estado->value);
-
-        // Una vez liberada, bodeguero sí puede verla.
+        // Bodeguero puede verla y trabajarla de inmediato.
         $this->actingAs($bodeguero)->get("/orders/{$order->id}")->assertOk();
+        $this->actingAs($bodeguero)->get('/bodega')->assertOk()->assertSee('Cliente Test');
 
         $this->actingAs($bodeguero)->patch("/orders/{$order->id}/preparar")->assertRedirect();
         $this->assertSame('preparando', $order->fresh()->estado->value);
@@ -97,6 +95,23 @@ class OrderWorkflowTest extends TestCase
         $this->actingAs($jefe)->get('/bodega')->assertForbidden();
     }
 
+    public function test_bodeguero_sigue_sin_ver_ordenes_antiguas_en_estado_creado(): void
+    {
+        $jefe = $this->makeUser('jefe_bodega');
+        $bodeguero = $this->makeUser('bodeguero');
+
+        // Orden legada de antes del flujo automático: sigue protegida.
+        $order = Order::create([
+            'source_type' => 'manual',
+            'cliente_nombre' => 'Cliente Legado',
+            'tipo_entrega' => 'retiro',
+            'estado' => \App\Enums\OrderStatus::CREADO,
+            'creado_por' => $jefe->id,
+        ]);
+
+        $this->actingAs($bodeguero)->get("/orders/{$order->id}")->assertForbidden();
+    }
+
     public function test_cancelar_solo_disponible_mientras_no_este_preparando(): void
     {
         $jefe = $this->makeUser('jefe_bodega');
@@ -122,8 +137,7 @@ class OrderWorkflowTest extends TestCase
             'productos' => [['product_id' => $product->id, 'cantidad' => 1]],
         ]);
         $order2 = Order::latest('id')->first();
-        $this->actingAs($jefe)->patch("/orders/{$order2->id}/liberar");
-        $this->assertSame('liberado', $order2->fresh()->estado->value);
+        $this->assertSame('liberado', $order2->estado->value);
 
         $this->actingAs($bodeguero)->patch("/orders/{$order2->id}/preparar");
         $this->assertSame('preparando', $order2->fresh()->estado->value);

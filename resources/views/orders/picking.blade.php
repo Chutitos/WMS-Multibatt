@@ -17,6 +17,7 @@ $todoCompleto = $order->items->every(
     <p class="mt-3 text-lg text-slate-600">
         Cliente: <strong>{{ $order->cliente_nombre }}</strong>.
         Apunta la pistola al código de cada producto. El sistema te dice de qué estante tomarlo.
+        Si no tienes pistola o el código no se puede leer, usa el botón <strong>"Confirmar 1 a mano"</strong>.
     </p>
 </div>
 
@@ -62,11 +63,18 @@ $todoCompleto = $order->items->every(
                 </div>
             </div>
 
-            <div class="text-center md:w-40">
+            <div class="text-center md:w-48">
                 <div class="text-3xl font-bold">
                     <span class="cantidad-progreso {{ $completoItem ? 'text-green-600' : 'text-slate-900' }}">{{ $item->cantidad_confirmada }}</span><span class="text-slate-400"> / </span><span class="cantidad-total text-slate-700">{{ $item->cantidad_solicitada }}</span>
                 </div>
                 <div class="marca-completo text-lg font-bold text-green-600 {{ $completoItem ? '' : 'invisible' }}">✅ Listo</div>
+
+                @if ($item->product_id && ! $completoItem)
+                <button type="button" data-codigo="{{ $item->producto_codigo }}"
+                    class="btn-confirmar-manual mt-2 w-full px-4 py-3 bg-slate-100 border border-slate-300 text-slate-700 text-base font-semibold rounded-xl hover:bg-slate-200">
+                    ✔ Confirmar 1 a mano
+                </button>
+                @endif
             </div>
         </div>
         @endforeach
@@ -115,14 +123,7 @@ $todoCompleto = $order->items->every(
             avisoIncompleto.classList.toggle('hidden', todoListo);
         }
 
-        input.addEventListener('keydown', function(e) {
-            if (e.key !== 'Enter') return;
-            e.preventDefault();
-
-            const codigo = input.value.trim();
-            input.value = '';
-            if (!codigo) return;
-
+        function procesarCodigo(codigo) {
             window.axios.post('{{ route('orders.picking.escanear', $order) }}', { codigo: codigo })
                 .then(function(response) {
                     const data = response.data;
@@ -158,6 +159,7 @@ $todoCompleto = $order->items->every(
                             fila.querySelector('.cantidad-progreso').classList.remove('text-slate-900');
                             fila.querySelector('.cantidad-progreso').classList.add('text-green-600');
                             fila.querySelector('.marca-completo').classList.remove('invisible');
+                            fila.querySelector('.btn-confirmar-manual')?.remove();
                             revisarSiTodoCompleto();
                         }
                     }
@@ -168,6 +170,25 @@ $todoCompleto = $order->items->every(
                 .finally(function() {
                     input.focus();
                 });
+        }
+
+        input.addEventListener('keydown', function(e) {
+            if (e.key !== 'Enter') return;
+            e.preventDefault();
+
+            const codigo = input.value.trim();
+            input.value = '';
+            if (!codigo) return;
+
+            procesarCodigo(codigo);
+        });
+
+        // Confirmación manual: mismo endpoint y misma trazabilidad que la
+        // pistola, para bodegas sin escáner o códigos ilegibles.
+        document.querySelectorAll('.btn-confirmar-manual').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                procesarCodigo(btn.dataset.codigo);
+            });
         });
 
         input.focus();

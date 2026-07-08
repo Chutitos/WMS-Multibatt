@@ -13,9 +13,9 @@
 <body class="bg-slate-200 text-slate-800 min-h-screen">
     <div class="min-h-screen flex flex-col">
         <header class="bg-white border-b border-slate-300 shadow-sm">
-            <div class="max-w-7xl mx-auto px-6 py-4">
+            <div class="max-w-7xl mx-auto px-3 md:px-6 py-4">
 
-                <div class="flex items-center justify-between gap-6">
+                <div class="flex items-center justify-between gap-4 flex-wrap">
                     <div class="flex items-center gap-4">
                         <img src="{{ asset('logo-multibatt.png') }}" class="h-10 w-auto" alt="Multibatt">
 
@@ -81,13 +81,13 @@
                 };
                 @endphp
 
-                <nav class="mt-4 -mb-4 flex items-center gap-x-6 gap-y-1 flex-wrap overflow-x-auto">
+                <nav class="mt-4 flex items-center gap-2 flex-wrap">
                     @foreach ($tabs as $tab)
                     <a href="{{ route($tab['route']) }}"
-                        class="pb-3 text-base font-semibold border-b-2 transition tracking-wide whitespace-nowrap
+                        class="px-4 py-2.5 rounded-xl text-base font-semibold transition whitespace-nowrap
                             {{ request()->routeIs($tab['match'])
-                                ? 'border-blue-600 text-blue-700'
-                                : 'border-transparent text-slate-600 hover:text-slate-900 hover:border-slate-300' }}">
+                                ? 'bg-blue-600 text-white shadow-sm'
+                                : 'bg-slate-100 text-slate-700 hover:bg-slate-200' }}">
                         {{ $tab['label'] }}
                     </a>
                     @endforeach
@@ -96,9 +96,9 @@
             </div>
         </header>
 
-        <main class="flex-1 py-8">
-            <div class="max-w-7xl mx-auto px-6">
-                <div class="bg-white border border-slate-300 rounded-2xl shadow-sm p-8">
+        <main class="flex-1 py-4 md:py-8">
+            <div class="max-w-7xl mx-auto px-2 md:px-6">
+                <div class="bg-white border border-slate-300 rounded-2xl shadow-sm p-4 md:p-8">
                     @if (session('success'))
                     <div class="mb-6 rounded-xl border-2 border-green-200 bg-green-50 px-5 py-4 text-green-800 text-base font-semibold">
                         ✅ {{ session('success') }}

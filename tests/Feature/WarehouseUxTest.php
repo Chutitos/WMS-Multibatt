@@ -153,6 +153,27 @@ class WarehouseUxTest extends TestCase
             ->assertSee('Confirmar que está lista');
     }
 
+    public function test_picking_ofrece_confirmar_a_mano_mientras_falte_escanear(): void
+    {
+        $bodeguero = $this->makeUser('bodeguero');
+        $product = $this->makeProduct(['sku' => 'BAT-MANO']);
+        $estante = $this->makeLocation();
+        $this->stockProductAt($product, $estante, 10);
+        $order = $this->makeOrder($bodeguero, $product, OrderStatus::PREPARANDO, solicitada: 3, confirmada: 0);
+
+        // Con unidades pendientes el botón manual está disponible.
+        $this->actingAs($bodeguero)->get("/orders/{$order->id}/picking")
+            ->assertOk()
+            ->assertSee('Confirmar 1 a mano')
+            ->assertSee('BAT-MANO');
+
+        // El botón usa el mismo endpoint del escáner: confirma 1 unidad.
+        $this->actingAs($bodeguero)
+            ->postJson("/orders/{$order->id}/picking/escanear", ['codigo' => 'BAT-MANO'])
+            ->assertOk()
+            ->assertJsonPath('cantidad_confirmada', 1);
+    }
+
     public function test_picking_muestra_link_al_mapa_del_estante_sugerido(): void
     {
         $bodeguero = $this->makeUser('bodeguero');

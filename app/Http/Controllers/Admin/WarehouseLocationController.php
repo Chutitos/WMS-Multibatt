@@ -20,20 +20,48 @@ class WarehouseLocationController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'nombre' => 'required|string|max:255',
-            'codigo' => 'required|string|max:50|unique:warehouse_locations,codigo',
+            'nombre' => 'nullable|string|max:255',
+            'codigo' => 'nullable|string|max:50|unique:warehouse_locations,codigo',
         ]);
+
+        // Un clic = un estante: si no viene nombre/código se generan solos
+        // ("Estante 5" / "E-05") y después se puede renombrar desde el mapa.
+        if (empty($validated['codigo'])) {
+            $numero = $this->siguienteNumeroDisponible();
+            $validated['codigo'] = sprintf('E-%02d', $numero);
+            $validated['nombre'] = $validated['nombre'] ?? "Estante {$numero}";
+        } elseif (empty($validated['nombre'])) {
+            $validated['nombre'] = $validated['codigo'];
+        }
+
+        // Cada estante nuevo aparece en un lugar distinto del mapa para que
+        // no queden apilados uno encima de otro al crearlos con un clic.
+        $orden = WarehouseLocation::count();
 
         $location = WarehouseLocation::create([
             'nombre' => $validated['nombre'],
             'codigo' => $validated['codigo'],
-            'pos_x' => 20,
-            'pos_y' => 20,
+            'pos_x' => 20 + ($orden % 6) * 145,
+            'pos_y' => 20 + intdiv($orden, 6) * 105,
             'width' => 130,
             'height' => 90,
         ]);
 
         return response()->json($location);
+    }
+
+    private function siguienteNumeroDisponible(): int
+    {
+        $numero = WarehouseLocation::pluck('codigo')
+            ->map(fn ($codigo) => preg_match('/(\d+)\s*$/', $codigo, $m) ? (int) $m[1] : 0)
+            ->max() ?? 0;
+
+        do {
+            $numero++;
+            $codigo = sprintf('E-%02d', $numero);
+        } while (WarehouseLocation::where('codigo', $codigo)->exists());
+
+        return $numero;
     }
 
     public function update(Request $request, WarehouseLocation $warehouseLocation)

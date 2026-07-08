@@ -20,7 +20,7 @@ $esAdmin = auth()->user()->role->name === 'admin';
     @if ($esAdmin)
     <button type="button" id="btn-agregar-ubicacion"
         class="inline-flex items-center px-5 py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700">
-        + Agregar ubicación
+        + Crear estante
     </button>
     @endif
 </div>
@@ -61,7 +61,11 @@ $esAdmin = auth()->user()->role->name === 'admin';
         </div>
         <ul id="popover-lista" class="max-h-56 overflow-y-auto px-4 py-2 divide-y divide-slate-100"></ul>
         @if ($esAdmin)
-        <div class="px-4 py-3 border-t border-slate-200">
+        <div class="px-4 py-3 border-t border-slate-200 space-y-2">
+            <button type="button" id="popover-renombrar"
+                class="w-full px-3 py-2 rounded-lg text-sm font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200">
+                Cambiar nombre
+            </button>
             <button type="button" id="popover-toggle-activa" class="w-full px-3 py-2 rounded-lg text-sm font-semibold"></button>
         </div>
         @endif
@@ -246,19 +250,34 @@ $esAdmin = auth()->user()->role->name === 'admin';
 
         if (esAdmin && btnAgregar) {
             btnAgregar.addEventListener('click', function() {
-                const nombre = prompt('Nombre de la ubicación (ej: Estante A1):');
-                if (!nombre) return;
-
-                const codigo = prompt('Código único (ej: A-01):');
-                if (!codigo) return;
-
-                window.axios.post('/ubicaciones', { nombre: nombre, codigo: codigo })
+                // Un clic crea el estante con nombre/código automáticos
+                // (Estante 5 / E-05); se puede renombrar desde su popover.
+                window.axios.post('/ubicaciones', {})
                     .then(function(response) {
                         crearCaja(response.data);
                     })
                     .catch(function(error) {
                         const mensaje = error.response?.data?.message || 'No se pudo crear la ubicación.';
                         alert(mensaje);
+                    });
+            });
+        }
+
+        const btnRenombrar = document.getElementById('popover-renombrar');
+        if (btnRenombrar) {
+            btnRenombrar.addEventListener('click', function() {
+                const box = document.querySelector(`.ubicacion-box[data-id="${popover.dataset.openFor}"]`);
+                if (!box) return;
+
+                const nombre = prompt('Nuevo nombre para esta ubicación:', box.dataset.nombre);
+                if (!nombre || nombre === box.dataset.nombre) return;
+
+                window.axios.patch(`/ubicaciones/${box.dataset.id}`, { nombre: nombre })
+                    .then(function() {
+                        window.location.reload();
+                    })
+                    .catch(function(error) {
+                        alert(error.response?.data?.message || 'No se pudo cambiar el nombre.');
                     });
             });
         }

@@ -14,7 +14,10 @@ class PreparationController extends Controller
 {
     public function index()
     {
-        $orders = Order::where('estado', OrderStatus::LIBERADO)->latest()->paginate(15);
+        $orders = Order::where('estado', OrderStatus::LIBERADO)
+            ->withCount('items')
+            ->latest()
+            ->paginate(15);
 
         return view('warehouse.index', compact('orders'));
     }
@@ -44,7 +47,12 @@ class PreparationController extends Controller
 
     public function preparando()
     {
-        $orders = Order::where('estado', OrderStatus::PREPARANDO)->latest()->paginate(15);
+        // Totales para mostrar el avance del escaneo en cada tarjeta.
+        $orders = Order::where('estado', OrderStatus::PREPARANDO)
+            ->withSum('items as total_solicitado', 'cantidad_solicitada')
+            ->withSum('items as total_confirmado', 'cantidad_confirmada')
+            ->latest()
+            ->paginate(15);
 
         return view('warehouse.preparando', compact('orders'));
     }

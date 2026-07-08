@@ -1,73 +1,54 @@
 @extends('layouts.wms')
 
 @section('content')
-<div class="flex items-center justify-between mb-6">
-    <div>
-        <h2 class="text-3xl font-bold text-slate-900">Bodega</h2>
-        <p class="mt-2 text-sm text-slate-600">
-            Órdenes liberadas para preparación.
-        </p>
+<div class="mb-6">
+    <div class="flex items-center gap-3">
+        <span class="w-10 h-10 rounded-full bg-blue-600 text-white font-bold flex items-center justify-center text-xl">1</span>
+        <h2 class="text-3xl font-bold text-slate-900">Por preparar</h2>
     </div>
+    <p class="mt-3 text-lg text-slate-600">
+        Elige una orden y toca <strong>"Comenzar a preparar"</strong>.
+    </p>
 </div>
 
-<div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-    <div class="overflow-x-auto">
-        <table class="min-w-full text-sm">
-            <thead class="bg-slate-50 border-b border-slate-200">
-                <tr>
-                    <th class="px-6 py-4 text-left font-semibold text-slate-700">ID</th>
-                    <th class="px-6 py-4 text-left font-semibold text-slate-700">Cliente</th>
-                    <th class="px-6 py-4 text-left font-semibold text-slate-700">Tipo entrega</th>
-                    <th class="px-6 py-4 text-left font-semibold text-slate-700">Estado</th>
-                    <th class="px-6 py-4 text-left font-semibold text-slate-700">Acciones</th>
-                </tr>
-            </thead>
-            <tbody class="divide-y divide-slate-200">
-                @forelse ($orders as $order)
-                <tr class="hover:bg-slate-50">
-                    <td class="px-6 py-4 font-medium text-slate-900">#{{ $order->id }}</td>
+<div class="space-y-4">
+    @forelse ($orders as $order)
+    <div class="bg-white border-2 border-slate-200 rounded-2xl p-6 flex flex-col md:flex-row md:items-center gap-5 hover:border-blue-300 transition">
+        <div class="flex-1">
+            <div class="flex items-center gap-3 flex-wrap">
+                <span class="text-2xl font-bold text-slate-900">Orden #{{ $order->id }}</span>
+                <x-order-status-badge :estado="$order->estado" />
+            </div>
+            <div class="mt-2 text-xl text-slate-800">{{ $order->cliente_nombre }}</div>
+            <div class="mt-1 text-lg text-slate-600">
+                {{ $order->tipo_entrega === 'retiro' ? '🏬 Retiro en tienda' : '🚚 Despacho a domicilio' }}
+                &nbsp;·&nbsp; {{ $order->items_count }} {{ $order->items_count === 1 ? 'producto' : 'productos' }}
+            </div>
+        </div>
 
-                    <td class="px-6 py-4">
-                        {{ $order->cliente_nombre }}
-                    </td>
+        <div class="flex flex-col gap-3 md:w-80">
+            <form method="POST" action="{{ route('orders.preparar', $order) }}">
+                @csrf
+                @method('PATCH')
+                <button type="submit"
+                    class="w-full px-6 py-5 bg-green-600 text-white text-xl font-bold rounded-2xl hover:bg-green-700 shadow-sm">
+                    ▶ Comenzar a preparar
+                </button>
+            </form>
 
-                    <td class="px-6 py-4 capitalize">
-                        {{ $order->tipo_entrega }}
-                    </td>
-
-                    <td class="px-6 py-4">
-                        <x-order-status-badge :estado="$order->estado" />
-                    </td>
-
-                    <td class="px-6 py-4 flex items-center gap-2">
-                        {{-- Ver --}}
-                        <a href="{{ route('orders.show', $order) }}"
-                            class="inline-flex items-center px-3 py-2 bg-slate-600 text-white text-sm font-semibold rounded-lg hover:bg-slate-700">
-                            Ver
-                        </a>
-
-                        {{-- Preparar --}}
-                        <form method="POST" action="{{ route('orders.preparar', $order) }}">
-                            @csrf
-                            @method('PATCH')
-
-                            <button type="submit"
-                                class="inline-flex items-center px-3 py-2 bg-green-600 text-white text-sm font-semibold rounded-lg hover:bg-green-700">
-                                Preparar
-                            </button>
-                        </form>
-                    </td>
-                </tr>
-                @empty
-                <tr>
-                    <td colspan="5" class="px-6 py-10 text-center text-slate-500">
-                        No hay órdenes liberadas para preparación.
-                    </td>
-                </tr>
-                @endforelse
-            </tbody>
-        </table>
+            <a href="{{ route('orders.show', $order) }}"
+                class="w-full text-center px-6 py-3 bg-slate-100 border border-slate-300 text-slate-700 text-lg font-semibold rounded-2xl hover:bg-slate-200">
+                Ver detalle
+            </a>
+        </div>
     </div>
+    @empty
+    <div class="bg-slate-50 border-2 border-dashed border-slate-300 rounded-2xl py-16 text-center">
+        <div class="text-5xl">✅</div>
+        <p class="mt-4 text-2xl font-bold text-slate-700">No hay órdenes por preparar</p>
+        <p class="mt-2 text-lg text-slate-500">Cuando liberen una orden nueva, aparecerá aquí.</p>
+    </div>
+    @endforelse
 </div>
 
 <div class="mt-6">

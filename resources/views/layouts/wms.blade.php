@@ -54,7 +54,7 @@
                                 {{ request()->routeIs('bodega.index')
                                     ? 'border-blue-600 text-blue-700'
                                     : 'border-transparent text-slate-600 hover:text-slate-900 hover:border-slate-300' }}">
-                            Bodega
+                            Por preparar
                         </a>
 
                         <a href="{{ route('bodega.preparando') }}"
@@ -70,7 +70,7 @@
                                 {{ request()->routeIs('bodega.listo')
                                     ? 'border-blue-600 text-blue-700'
                                     : 'border-transparent text-slate-600 hover:text-slate-900 hover:border-slate-300' }}">
-                            Listas
+                            Para entregar
                         </a>
                         <a href="{{ route('users.index') }}"
                             class="pb-3 text-lg font-semibold border-b-2 transition tracking-wide
@@ -147,7 +147,7 @@
                                 {{ request()->routeIs('bodega.index')
                                     ? 'border-blue-600 text-blue-700'
                                     : 'border-transparent text-slate-600 hover:text-slate-900 hover:border-slate-300' }}">
-                            Bodega
+                            Por preparar
                         </a>
 
                         <a href="{{ route('bodega.preparando') }}"
@@ -163,7 +163,7 @@
                                 {{ request()->routeIs('bodega.listo')
                                     ? 'border-blue-600 text-blue-700'
                                     : 'border-transparent text-slate-600 hover:text-slate-900 hover:border-slate-300' }}">
-                            Listas
+                            Para entregar
                         </a>
 
                         <a href="{{ route('product-locations.index') }}"

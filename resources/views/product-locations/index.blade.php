@@ -21,6 +21,7 @@ $esAdmin = auth()->user()->role->name === 'admin';
                 <tr>
                     <th class="px-6 py-4 text-left font-semibold text-slate-700">Producto</th>
                     <th class="px-6 py-4 text-left font-semibold text-slate-700">Ubicación</th>
+                    <th class="px-6 py-4 text-left font-semibold text-slate-700">Puesto</th>
                     <th class="px-6 py-4 text-left font-semibold text-slate-700">Lote</th>
                     <th class="px-6 py-4 text-left font-semibold text-slate-700">Fecha ingreso</th>
                     <th class="px-6 py-4 text-left font-semibold text-slate-700">Cantidad</th>
@@ -34,6 +35,9 @@ $esAdmin = auth()->user()->role->name === 'admin';
                     <td class="px-6 py-4 text-slate-900">
                         {{ $pl->warehouseLocation->nombre }}
                         <span class="text-slate-500 font-mono text-sm">({{ $pl->warehouseLocation->codigo }})</span>
+                    </td>
+                    <td class="px-6 py-4 text-slate-700 whitespace-nowrap">
+                        {{ $pl->columna ? "C{$pl->columna} · N{$pl->nivel}" : '-' }}
                     </td>
                     <td class="px-6 py-4 text-slate-700">{{ $pl->lote ?: '-' }}</td>
                     <td class="px-6 py-4 text-slate-700">{{ $pl->fecha_ingreso->format('d-m-Y') }}</td>
@@ -60,7 +64,7 @@ $esAdmin = auth()->user()->role->name === 'admin';
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="6" class="px-6 py-12 text-center">
+                    <td colspan="7" class="px-6 py-12 text-center">
                         <div class="text-4xl">🗄️</div>
                         <p class="mt-3 text-xl font-bold text-slate-700">No hay existencias asignadas todavía</p>
                         <p class="mt-1 text-base text-slate-500">Usa "+ Asignar existencia" para registrar qué hay en cada estante.</p>

@@ -46,6 +46,7 @@ Route::middleware(['auth'])->group(function () {
     // Mapa de bodega: los 3 roles pueden consultarlo; solo admin puede editarlo
     // (crear/mover ubicaciones vive en el grupo admin de arriba).
     Route::get('/ubicaciones', [WarehouseLocationController::class, 'index'])->name('locations.index');
+    Route::get('/ubicaciones/{warehouseLocation}', [WarehouseLocationController::class, 'show'])->name('locations.show');
 
     // ADMIN + JEFE
     Route::middleware(['role:admin,jefe_bodega'])->group(function () {

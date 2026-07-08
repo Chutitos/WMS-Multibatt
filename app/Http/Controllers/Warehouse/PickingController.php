@@ -113,10 +113,12 @@ class PickingController extends Controller
                     ? null
                     : ProductLocation::disponibleFifo($product->id)->with('warehouseLocation')->first();
 
-                $mensaje = "{$item->producto_nombre} confirmado ({$item->cantidad_confirmada} de {$item->cantidad_solicitada}) — tomado de {$location->warehouseLocation->nombre}.";
+                $puestoOrigen = $location->puesto() ? " ({$location->puesto()})" : '';
+                $mensaje = "{$item->producto_nombre} confirmado ({$item->cantidad_confirmada} de {$item->cantidad_solicitada}) — tomado de {$location->warehouseLocation->nombre}{$puestoOrigen}.";
 
-                if ($siguiente && $siguiente->warehouse_location_id !== $location->warehouse_location_id) {
-                    $mensaje .= " Siguiente unidad en {$siguiente->warehouseLocation->nombre} ({$siguiente->warehouseLocation->codigo}).";
+                if ($siguiente && $siguiente->id !== $location->id) {
+                    $puestoSiguiente = $siguiente->puesto() ? ", {$siguiente->puesto()}" : '';
+                    $mensaje .= " Siguiente unidad en {$siguiente->warehouseLocation->nombre} ({$siguiente->warehouseLocation->codigo}{$puestoSiguiente}).";
                 }
 
                 return [
@@ -129,6 +131,7 @@ class PickingController extends Controller
                         'id' => $siguiente->warehouse_location_id,
                         'nombre' => $siguiente->warehouseLocation->nombre,
                         'codigo' => $siguiente->warehouseLocation->codigo,
+                        'puesto' => $siguiente->puesto(),
                     ] : null,
                 ];
             });

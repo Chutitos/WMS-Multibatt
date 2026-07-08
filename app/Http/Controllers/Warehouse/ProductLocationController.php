@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class ProductLocationController extends Controller
 {
@@ -39,13 +40,19 @@ class ProductLocationController extends Controller
         $validated = $request->validate([
             'product_id' => ['required', Rule::exists('products', 'id')->where('active', true)],
             'warehouse_location_id' => ['required', Rule::exists('warehouse_locations', 'id')->where('activa', true)],
+            'columna' => 'nullable|integer|min:1|required_with:nivel',
+            'nivel' => 'nullable|integer|min:1|required_with:columna',
             'lote' => 'nullable|string|max:100',
             'fecha_ingreso' => 'required|date',
             'cantidad' => 'required|integer|min:1',
         ], [
             'product_id.exists' => 'El producto seleccionado no existe o está inactivo.',
             'warehouse_location_id.exists' => 'La ubicación seleccionada no existe o está inactiva.',
+            'columna.required_with' => 'Si indicas el nivel también debes indicar la columna.',
+            'nivel.required_with' => 'Si indicas la columna también debes indicar el nivel.',
         ]);
+
+        $this->validarPuesto($validated);
 
         DB::transaction(function () use ($validated) {
             $productLocation = ProductLocation::create($validated);
@@ -57,6 +64,13 @@ class ProductLocationController extends Controller
                 'detalle' => $this->descripcionExistencia($productLocation),
             ]);
         });
+
+        // Si la asignación se hizo desde la grilla del estante, se vuelve
+        // ahí para ver el pallet recién puesto en su puesto.
+        if ($request->boolean('volver_al_estante')) {
+            return redirect()->route('locations.show', $validated['warehouse_location_id'])
+                ->with('success', 'Pallet asignado al puesto correctamente.');
+        }
 
         return redirect()->route('product-locations.index')
             ->with('success', 'Existencia asignada a la ubicación correctamente.');
@@ -96,13 +110,24 @@ class ProductLocationController extends Controller
         $validated = $request->validate([
             'product_id' => ['required', $reglaProducto],
             'warehouse_location_id' => ['required', $reglaUbicacion],
+            'columna' => 'nullable|integer|min:1|required_with:nivel',
+            'nivel' => 'nullable|integer|min:1|required_with:columna',
             'lote' => 'nullable|string|max:100',
             'fecha_ingreso' => 'required|date',
             'cantidad' => 'required|integer|min:0',
         ], [
             'product_id.exists' => 'El producto seleccionado no existe o está inactivo.',
             'warehouse_location_id.exists' => 'La ubicación seleccionada no existe o está inactiva.',
+            'columna.required_with' => 'Si indicas el nivel también debes indicar la columna.',
+            'nivel.required_with' => 'Si indicas la columna también debes indicar el nivel.',
         ]);
+
+        // Si el formulario no traía los campos de puesto se conservan los
+        // valores actuales en vez de borrarlos.
+        $validated['columna'] = $validated['columna'] ?? null;
+        $validated['nivel'] = $validated['nivel'] ?? null;
+
+        $this->validarPuesto($validated, $productLocation);
 
         $antes = $this->camposComparables($productLocation);
 
@@ -161,14 +186,49 @@ class ProductLocationController extends Controller
         return view('product-locations.historial', compact('eventos'));
     }
 
+    /**
+     * Reglas del puesto físico: debe caber dentro del rack (columnas x
+     * niveles) y en cada puesto va un solo pallet con existencia.
+     *
+     * @param array<string, mixed> $validated
+     */
+    private function validarPuesto(array $validated, ?ProductLocation $excluir = null): void
+    {
+        if (empty($validated['columna']) || empty($validated['nivel'])) {
+            return;
+        }
+
+        $rack = WarehouseLocation::find($validated['warehouse_location_id']);
+
+        if ($validated['columna'] > $rack->columnas || $validated['nivel'] > $rack->niveles) {
+            throw ValidationException::withMessages([
+                'columna' => "Ese puesto no existe: \"{$rack->nombre}\" tiene {$rack->columnas} columna(s) y {$rack->niveles} nivel(es).",
+            ]);
+        }
+
+        $ocupado = ProductLocation::where('warehouse_location_id', $rack->id)
+            ->where('columna', $validated['columna'])
+            ->where('nivel', $validated['nivel'])
+            ->where('cantidad', '>', 0)
+            ->when($excluir, fn ($q) => $q->where('id', '!=', $excluir->id))
+            ->exists();
+
+        if ($ocupado) {
+            throw ValidationException::withMessages([
+                'columna' => "El puesto columna {$validated['columna']}, nivel {$validated['nivel']} ya tiene un pallet con existencia.",
+            ]);
+        }
+    }
+
     private function descripcionExistencia(ProductLocation $productLocation): string
     {
         $productLocation->loadMissing(['product', 'warehouseLocation']);
 
         $lote = $productLocation->lote ? ", lote {$productLocation->lote}" : '';
+        $puesto = $productLocation->puesto() ? " ({$productLocation->puesto()})" : '';
 
         return "{$productLocation->product->name} en {$productLocation->warehouseLocation->nombre} "
-            . "({$productLocation->warehouseLocation->codigo}){$lote}, "
+            . "({$productLocation->warehouseLocation->codigo}){$puesto}{$lote}, "
             . "ingreso {$productLocation->fecha_ingreso->format('d-m-Y')}: "
             . "{$productLocation->cantidad} unidades";
     }
@@ -183,6 +243,7 @@ class ProductLocationController extends Controller
         return [
             'producto' => $productLocation->product->name,
             'ubicación' => $productLocation->warehouseLocation->codigo,
+            'puesto' => $productLocation->puesto() ?: '-',
             'lote' => $productLocation->lote ?: '-',
             'fecha ingreso' => $productLocation->fecha_ingreso->format('d-m-Y'),
             'cantidad' => $productLocation->cantidad,

@@ -13,6 +13,8 @@ class WarehouseLocation extends Model
         'pos_y',
         'width',
         'height',
+        'columnas',
+        'niveles',
         'activa',
     ];
 
@@ -21,6 +23,8 @@ class WarehouseLocation extends Model
         'pos_y' => 'integer',
         'width' => 'integer',
         'height' => 'integer',
+        'columnas' => 'integer',
+        'niveles' => 'integer',
         'activa' => 'boolean',
     ];
 

@@ -32,6 +32,16 @@
             </x-wms.select>
         </x-wms.field>
 
+        <div class="grid grid-cols-2 gap-4">
+            <x-wms.field label="Columna" name="columna" :optional="true" hint="Puesto físico dentro del rack.">
+                <x-wms.input type="number" name="columna" min="1" value="{{ old('columna', $productLocation->columna) }}" />
+            </x-wms.field>
+
+            <x-wms.field label="Nivel" name="nivel" :optional="true">
+                <x-wms.input type="number" name="nivel" min="1" value="{{ old('nivel', $productLocation->nivel) }}" />
+            </x-wms.field>
+        </div>
+
         <x-wms.field label="Lote" name="lote" :optional="true">
             <x-wms.input type="text" name="lote" value="{{ old('lote', $productLocation->lote) }}" />
         </x-wms.field>

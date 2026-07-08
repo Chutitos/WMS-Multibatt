@@ -54,15 +54,19 @@ $esAdmin = auth()->user()->role->name === 'admin';
             <button type="button" id="popover-cerrar" class="text-slate-400 hover:text-slate-700 text-lg leading-none">&times;</button>
         </div>
         <ul id="popover-lista" class="max-h-56 overflow-y-auto px-4 py-2 divide-y divide-slate-100"></ul>
-        @if ($esAdmin)
         <div class="px-4 py-3 border-t border-slate-200 space-y-2">
+            <a id="popover-abrir" href="#"
+                class="block w-full text-center px-3 py-2 rounded-lg text-sm font-semibold bg-blue-600 text-white hover:bg-blue-700">
+                Abrir estante
+            </a>
+            @if ($esAdmin)
             <button type="button" id="popover-renombrar"
                 class="w-full px-3 py-2 rounded-lg text-sm font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200">
                 Cambiar nombre
             </button>
             <button type="button" id="popover-toggle-activa" class="w-full px-3 py-2 rounded-lg text-sm font-semibold"></button>
+            @endif
         </div>
-        @endif
     </div>
 </div>
 
@@ -81,6 +85,7 @@ $esAdmin = auth()->user()->role->name === 'admin';
         const popoverCodigo = document.getElementById('popover-codigo');
         const popoverLista = document.getElementById('popover-lista');
         const popoverCerrar = document.getElementById('popover-cerrar');
+        const popoverAbrir = document.getElementById('popover-abrir');
         const btnToggleActiva = document.getElementById('popover-toggle-activa');
 
         function ocultarPopover() {
@@ -115,6 +120,10 @@ $esAdmin = auth()->user()->role->name === 'admin';
                     `;
                     popoverLista.appendChild(li);
                 });
+            }
+
+            if (popoverAbrir) {
+                popoverAbrir.href = `/ubicaciones/${box.dataset.id}`;
             }
 
             if (btnToggleActiva) {

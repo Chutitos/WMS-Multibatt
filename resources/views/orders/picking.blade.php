@@ -49,6 +49,9 @@ $todoCompleto = $order->items->every(
                     @elseif (isset($sugerencias[$item->id]) && $sugerencias[$item->id])
                     📍 Tómalo de: <strong class="text-slate-900">{{ $sugerencias[$item->id]->warehouseLocation->nombre }}</strong>
                     <span class="font-mono text-base text-slate-500">({{ $sugerencias[$item->id]->warehouseLocation->codigo }})</span>
+                    @if ($sugerencias[$item->id]->puesto())
+                    <span class="text-slate-700">— {{ $sugerencias[$item->id]->puesto() }}</span>
+                    @endif
                     <a href="{{ route('locations.index', ['destacar' => $sugerencias[$item->id]->warehouse_location_id]) }}"
                         class="ml-2 text-blue-600 underline text-base font-semibold whitespace-nowrap">Ver en el mapa</a>
                     @elseif ($completoItem)
@@ -138,8 +141,9 @@ $todoCompleto = $order->items->every(
                                 linea.innerHTML = '<span class="text-green-700">Ya está completo</span>';
                             } else if (data.siguiente_ubicacion) {
                                 const u = data.siguiente_ubicacion;
+                                const puesto = u.puesto ? ` <span class="text-slate-700">— ${u.puesto}</span>` : '';
                                 linea.innerHTML = `📍 Tómalo de: <strong class="text-slate-900">${u.nombre}</strong>
-                                    <span class="font-mono text-base text-slate-500">(${u.codigo})</span>
+                                    <span class="font-mono text-base text-slate-500">(${u.codigo})</span>${puesto}
                                     <a href="{{ route('locations.index') }}?destacar=${u.id}"
                                         class="ml-2 text-blue-600 underline text-base font-semibold whitespace-nowrap">Ver en el mapa</a>`;
                             } else {

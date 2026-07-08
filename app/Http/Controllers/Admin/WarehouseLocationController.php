@@ -64,6 +64,32 @@ class WarehouseLocationController extends Controller
         return $numero;
     }
 
+    /**
+     * Detalle del rack: grilla de columnas x niveles con el pallet que
+     * ocupa cada puesto. Visible para los 3 roles; asignar/editar sigue
+     * gobernado por las rutas de existencias.
+     */
+    public function show(WarehouseLocation $warehouseLocation)
+    {
+        $pallets = $warehouseLocation->productLocations()
+            ->with('product')
+            ->orderBy('fecha_ingreso')
+            ->get();
+
+        // Un pallet por puesto: los que tienen existencia mandan; un
+        // agotado solo se muestra si el puesto no fue reocupado.
+        $grilla = [];
+        foreach ($pallets->where('cantidad', '>', 0) as $pallet) {
+            if ($pallet->columna && $pallet->nivel) {
+                $grilla[$pallet->nivel][$pallet->columna] = $pallet;
+            }
+        }
+
+        $sinPuesto = $pallets->filter(fn ($p) => ! $p->columna || ! $p->nivel);
+
+        return view('locations.show', compact('warehouseLocation', 'grilla', 'sinPuesto'));
+    }
+
     public function update(Request $request, WarehouseLocation $warehouseLocation)
     {
         $validated = $request->validate([
@@ -73,8 +99,29 @@ class WarehouseLocationController extends Controller
             'pos_y' => 'sometimes|integer',
             'width' => 'sometimes|integer|min:60',
             'height' => 'sometimes|integer|min:60',
+            'columnas' => 'sometimes|integer|min:1|max:20',
+            'niveles' => 'sometimes|integer|min:1|max:10',
             'activa' => 'sometimes|boolean',
         ]);
+
+        // No se puede achicar el rack si quedarían pallets con existencia
+        // en puestos que ya no existirían.
+        if (isset($validated['columnas']) || isset($validated['niveles'])) {
+            $columnas = $validated['columnas'] ?? $warehouseLocation->columnas;
+            $niveles = $validated['niveles'] ?? $warehouseLocation->niveles;
+
+            $palletsFuera = $warehouseLocation->productLocations()
+                ->where('cantidad', '>', 0)
+                ->where(function ($query) use ($columnas, $niveles) {
+                    $query->where('columna', '>', $columnas)
+                        ->orWhere('nivel', '>', $niveles);
+                })
+                ->exists();
+
+            if ($palletsFuera) {
+                return $this->respuestaError($request, 'No puedes achicar el rack: hay pallets con existencia en puestos que quedarían fuera. Reubícalos primero.');
+            }
+        }
 
         // No se puede desactivar una ubicación que todavía tiene productos:
         // quedaría stock "invisible" para asignaciones y correcciones.
@@ -82,14 +129,28 @@ class WarehouseLocationController extends Controller
             $tieneStock = $warehouseLocation->productLocations()->where('cantidad', '>', 0)->exists();
 
             if ($tieneStock) {
-                return response()->json([
-                    'message' => 'No puedes desactivar una ubicación que aún tiene productos guardados. Reubica o corrige sus existencias primero.',
-                ], 422);
+                return $this->respuestaError($request, 'No puedes desactivar una ubicación que aún tiene productos guardados. Reubica o corrige sus existencias primero.');
             }
         }
 
         $warehouseLocation->update($validated);
 
-        return response()->json($warehouseLocation);
+        // El mapa (axios) espera JSON; el formulario del detalle del rack
+        // es un submit HTML normal y espera un redirect.
+        if ($request->expectsJson()) {
+            return response()->json($warehouseLocation);
+        }
+
+        return redirect()->route('locations.show', $warehouseLocation)
+            ->with('success', 'Estante actualizado correctamente.');
+    }
+
+    private function respuestaError(Request $request, string $mensaje)
+    {
+        if ($request->expectsJson()) {
+            return response()->json(['message' => $mensaje], 422);
+        }
+
+        return redirect()->back()->with('error', $mensaje);
     }
 }

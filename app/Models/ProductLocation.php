@@ -10,6 +10,8 @@ class ProductLocation extends Model
     protected $fillable = [
         'product_id',
         'warehouse_location_id',
+        'columna',
+        'nivel',
         'lote',
         'fecha_ingreso',
         'cantidad',
@@ -17,8 +19,23 @@ class ProductLocation extends Model
 
     protected $casts = [
         'fecha_ingreso' => 'date',
+        'columna' => 'integer',
+        'nivel' => 'integer',
         'cantidad' => 'integer',
     ];
+
+    /**
+     * Etiqueta legible del puesto físico dentro del rack, o null si la
+     * existencia no tiene puesto asignado.
+     */
+    public function puesto(): ?string
+    {
+        if (! $this->columna || ! $this->nivel) {
+            return null;
+        }
+
+        return "columna {$this->columna}, nivel {$this->nivel}";
+    }
 
     public function product()
     {

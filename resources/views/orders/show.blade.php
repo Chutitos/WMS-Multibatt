@@ -169,8 +169,8 @@ use App\Enums\OrderStatus;
     @endphp
 
     <a href="{{ route($volverRuta) }}"
-        class="inline-flex items-center px-5 py-3 bg-slate-200 text-slate-800 rounded-xl font-semibold hover:bg-slate-300">
-        Volver
+        class="inline-flex items-center px-6 py-4 bg-slate-200 text-slate-800 text-lg rounded-2xl font-semibold hover:bg-slate-300">
+        ← Volver
     </a>
 
     @can('liberar', $order)
@@ -179,7 +179,7 @@ use App\Enums\OrderStatus;
         @method('PATCH')
 
         <button type="submit"
-            class="inline-flex items-center px-5 py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700">
+            class="inline-flex items-center px-6 py-4 bg-blue-600 text-white text-lg rounded-2xl font-bold hover:bg-blue-700">
             Liberar orden
         </button>
     </form>
@@ -187,8 +187,8 @@ use App\Enums\OrderStatus;
 
     @can('confirmar', $order)
     <a href="{{ route('orders.picking', $order) }}"
-        class="inline-flex items-center px-5 py-3 bg-green-600 text-white rounded-xl font-semibold hover:bg-green-700">
-        Ir a picking / confirmar productos
+        class="inline-flex items-center px-6 py-4 bg-blue-600 text-white text-lg rounded-2xl font-bold hover:bg-blue-700">
+        📷 Ir a escanear productos
     </a>
     @endcan
 
@@ -199,7 +199,7 @@ use App\Enums\OrderStatus;
         @method('PATCH')
 
         <button type="submit"
-            class="inline-flex items-center px-5 py-3 bg-red-600 text-white rounded-xl font-semibold hover:bg-red-700">
+            class="inline-flex items-center px-6 py-4 bg-red-600 text-white text-lg rounded-2xl font-bold hover:bg-red-700">
             Cancelar orden
         </button>
     </form>
@@ -207,51 +207,53 @@ use App\Enums\OrderStatus;
 </div>
 
 @can('entregar', $order)
-<div class="mt-4 max-w-md bg-slate-50 border border-slate-200 rounded-2xl p-5">
-    <h3 class="text-sm font-semibold text-slate-900 mb-3">
-        Entregar orden
-        <span class="font-normal text-slate-500">({{ $order->tipo_entrega === 'retiro' ? 'Retiro en bodega' : 'Despacho' }})</span>
+<div class="mt-6 max-w-xl bg-green-50 border-4 border-green-200 rounded-3xl p-6">
+    <h3 class="text-xl font-bold text-green-900 mb-1">
+        🤝 Entregar orden
     </h3>
+    <p class="text-base text-slate-600 mb-4">
+        {{ $order->tipo_entrega === 'retiro' ? 'El cliente retira en bodega. Anota quién se la lleva.' : 'Se despacha a domicilio. Anota el transportista.' }}
+    </p>
 
     <form method="POST" action="{{ route('orders.entregar', $order) }}"
         onsubmit="return confirm('¿Confirmas que la orden fue entregada? Esta acción no se puede deshacer.')"
-        class="space-y-3">
+        class="space-y-4">
         @csrf
         @method('PATCH')
 
         @if ($order->tipo_entrega === 'retiro')
         <div>
-            <label class="block text-xs font-semibold text-slate-700 mb-1">Nombre de quién retira</label>
+            <label class="block text-base font-semibold text-slate-700 mb-2">Nombre de quién retira</label>
             <input type="text" name="retirado_por_nombre" value="{{ old('retirado_por_nombre') }}" required
-                class="w-full rounded-lg border-slate-300 text-sm focus:border-blue-500 focus:ring-blue-500">
+                class="w-full rounded-xl border-2 border-slate-300 text-lg px-4 py-3 focus:border-green-500 focus:ring-green-500">
             @error('retirado_por_nombre')
-            <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+            <p class="mt-2 text-base text-red-600">{{ $message }}</p>
             @enderror
         </div>
         <div>
-            <label class="block text-xs font-semibold text-slate-700 mb-1">RUT (opcional)</label>
+            <label class="block text-base font-semibold text-slate-700 mb-2">RUT (opcional)</label>
             <input type="text" name="retirado_por_rut" value="{{ old('retirado_por_rut') }}"
-                class="w-full rounded-lg border-slate-300 text-sm focus:border-blue-500 focus:ring-blue-500">
+                class="w-full rounded-xl border-2 border-slate-300 text-lg px-4 py-3 focus:border-green-500 focus:ring-green-500">
         </div>
         @else
         <div>
-            <label class="block text-xs font-semibold text-slate-700 mb-1">Transportista</label>
+            <label class="block text-base font-semibold text-slate-700 mb-2">Transportista</label>
             <input type="text" name="transportista" value="{{ old('transportista') }}" required
-                class="w-full rounded-lg border-slate-300 text-sm focus:border-blue-500 focus:ring-blue-500">
+                class="w-full rounded-xl border-2 border-slate-300 text-lg px-4 py-3 focus:border-green-500 focus:ring-green-500">
             @error('transportista')
-            <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+            <p class="mt-2 text-base text-red-600">{{ $message }}</p>
             @enderror
         </div>
         <div>
-            <label class="block text-xs font-semibold text-slate-700 mb-1">N° de guía (opcional)</label>
+            <label class="block text-base font-semibold text-slate-700 mb-2">N° de guía (opcional)</label>
             <input type="text" name="guia_despacho" value="{{ old('guia_despacho') }}"
-                class="w-full rounded-lg border-slate-300 text-sm focus:border-blue-500 focus:ring-blue-500">
+                class="w-full rounded-xl border-2 border-slate-300 text-lg px-4 py-3 focus:border-green-500 focus:ring-green-500">
         </div>
         @endif
 
         <button type="submit"
-            class="inline-flex items-center px-5 py-3 bg-emerald-600 text-white rounded-xl font-semibold hover:bg-emerald-700">
-            Confirmar entrega
+            class="w-full px-6 py-5 bg-green-600 text-white text-xl font-bold rounded-2xl hover:bg-green-700 shadow-sm">
+            🤝 Confirmar entrega
         </button>
     </form>
 </div>

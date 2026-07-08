@@ -127,6 +127,32 @@ class WarehouseUxTest extends TestCase
             ->assertDontSee('Escanear productos');
     }
 
+    public function test_picking_muestra_estante_sugerido_y_oculta_confirmar_si_falta_escanear(): void
+    {
+        $bodeguero = $this->makeUser('bodeguero');
+        $product = $this->makeProduct();
+        $estante = $this->makeLocation(['nombre' => 'Estante 3']);
+        $this->stockProductAt($product, $estante, 10);
+        $order = $this->makeOrder($bodeguero, $product, OrderStatus::PREPARANDO, solicitada: 3, confirmada: 1);
+
+        $this->actingAs($bodeguero)->get("/orders/{$order->id}/picking")
+            ->assertOk()
+            ->assertSee('Escanea aquí')
+            ->assertSee('Estante 3')
+            ->assertSee('aparecerá el botón para confirmar');
+    }
+
+    public function test_picking_muestra_confirmar_cuando_todo_esta_escaneado(): void
+    {
+        $bodeguero = $this->makeUser('bodeguero');
+        $product = $this->makeProduct();
+        $order = $this->makeOrder($bodeguero, $product, OrderStatus::PREPARANDO, solicitada: 3, confirmada: 3);
+
+        $this->actingAs($bodeguero)->get("/orders/{$order->id}/picking")
+            ->assertOk()
+            ->assertSee('Confirmar que está lista');
+    }
+
     public function test_pantalla_para_entregar_muestra_boton_entregar(): void
     {
         $bodeguero = $this->makeUser('bodeguero');

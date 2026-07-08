@@ -10,8 +10,10 @@ use App\Http\Controllers\Warehouse\PickingController;
 use App\Http\Controllers\Admin\UserController;
 use Illuminate\Support\Facades\Route;
 
+// La raíz lleva directo al trabajo: al dashboard si hay sesión,
+// al login si no (antes mostraba la página de bienvenida de Laravel).
 Route::get('/', function () {
-    return view('welcome');
+    return redirect(auth()->check() ? route('dashboard') : route('login'));
 });
 
 Route::middleware(['auth'])->group(function () {

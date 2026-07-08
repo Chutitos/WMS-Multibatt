@@ -8,6 +8,23 @@
     </p>
 </div>
 
+@if ($errors->any())
+<div class="max-w-4xl mx-auto mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800">
+    <ul class="list-disc pl-5 space-y-1">
+        @foreach ($errors->all() as $error)
+        <li>{{ $error }}</li>
+        @endforeach
+    </ul>
+</div>
+@endif
+
+@if ($products->isEmpty())
+<div class="max-w-4xl mx-auto mb-6 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-amber-800">
+    Todavía no hay productos activos en el catálogo.
+    <a href="{{ route('products.create') }}" class="font-semibold underline">Crea un producto</a> antes de armar una orden.
+</div>
+@endif
+
 <div class="flex justify-center">
     <div class="w-full max-w-4xl bg-white rounded-2xl shadow-sm border border-slate-300 p-8">
         <form method="POST" action="{{ route('orders.store') }}" class="space-y-6">
@@ -51,10 +68,15 @@
                 <div id="productos-container" class="space-y-4">
                     <div class="producto-item grid grid-cols-1 md:grid-cols-12 gap-4 items-end border border-slate-200 rounded-xl p-4">
                         <div class="md:col-span-7">
-                            <label class="block text-sm font-semibold text-slate-700 mb-2">Nombre producto</label>
-                            <input type="text" name="productos[0][nombre]"
+                            <label class="block text-sm font-semibold text-slate-700 mb-2">Producto</label>
+                            <select name="productos[0][product_id]"
                                 class="w-full rounded-xl border-slate-300 focus:border-blue-500 focus:ring-blue-500"
                                 required>
+                                <option value="">Seleccione un producto</option>
+                                @foreach ($products as $product)
+                                <option value="{{ $product->id }}">{{ $product->sku }} — {{ $product->name }}</option>
+                                @endforeach
+                            </select>
                         </div>
 
                         <div class="md:col-span-3">
@@ -100,6 +122,7 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        const productosDisponibles = @json($products->map(fn ($p) => ['id' => $p->id, 'label' => $p->sku . ' — ' . $p->name]));
         const container = document.getElementById('productos-container');
         const btnAgregar = document.getElementById('agregar-producto');
 
@@ -122,12 +145,22 @@
             const items = container.querySelectorAll('.producto-item');
 
             items.forEach((item, index) => {
-                const nombreInput = item.querySelector('input[type="text"]');
+                const selectProducto = item.querySelector('select');
                 const cantidadInput = item.querySelector('input[type="number"]');
 
-                nombreInput.name = `productos[${index}][nombre]`;
+                selectProducto.name = `productos[${index}][product_id]`;
                 cantidadInput.name = `productos[${index}][cantidad]`;
             });
+        }
+
+        function construirOpciones() {
+            let opciones = '<option value="">Seleccione un producto</option>';
+
+            productosDisponibles.forEach((producto) => {
+                opciones += `<option value="${producto.id}">${producto.label}</option>`;
+            });
+
+            return opciones;
         }
 
         btnAgregar.addEventListener('click', function() {
@@ -137,10 +170,12 @@
             nuevo.className = 'producto-item grid grid-cols-1 md:grid-cols-12 gap-4 items-end border border-slate-200 rounded-xl p-4';
             nuevo.innerHTML = `
                 <div class="md:col-span-7">
-                    <label class="block text-sm font-semibold text-slate-700 mb-2">Nombre producto</label>
-                    <input type="text" name="productos[${total}][nombre]"
+                    <label class="block text-sm font-semibold text-slate-700 mb-2">Producto</label>
+                    <select name="productos[${total}][product_id]"
                         class="w-full rounded-xl border-slate-300 focus:border-blue-500 focus:ring-blue-500"
                         required>
+                        ${construirOpciones()}
+                    </select>
                 </div>
 
                 <div class="md:col-span-3">

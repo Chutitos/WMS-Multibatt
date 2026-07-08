@@ -10,18 +10,33 @@
 
 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
     <div class="bg-slate-50 rounded-2xl shadow-md border border-slate-300 p-6">
-        <div class="text-sm text-slate-500">Órdenes creadas</div>
-        <div class="mt-3 text-3xl font-bold text-blue-600">0</div>
+        <div class="text-sm text-slate-500">Órdenes creadas (pendientes de liberar)</div>
+        <div class="mt-3 text-3xl font-bold text-blue-600">{{ $counts['creadas'] }}</div>
     </div>
 
     <div class="bg-slate-50 rounded-2xl shadow-md border border-slate-300 p-6">
         <div class="text-sm text-slate-500">Liberadas a bodega</div>
-        <div class="mt-3 text-3xl font-bold text-blue-600">0</div>
+        <div class="mt-3 text-3xl font-bold text-blue-600">{{ $counts['liberadas'] }}</div>
+    </div>
+
+    <div class="bg-slate-50 rounded-2xl shadow-md border border-slate-300 p-6">
+        <div class="text-sm text-slate-500">En preparación</div>
+        <div class="mt-3 text-3xl font-bold text-orange-500">{{ $counts['preparando'] }}</div>
     </div>
 
     <div class="bg-slate-50 rounded-2xl shadow-md border border-slate-300 p-6">
         <div class="text-sm text-slate-500">Listas para entregar</div>
-        <div class="mt-3 text-3xl font-bold text-blue-600">0</div>
+        <div class="mt-3 text-3xl font-bold text-green-600">{{ $counts['listas'] }}</div>
+    </div>
+
+    <div class="bg-slate-50 rounded-2xl shadow-md border border-slate-300 p-6">
+        <div class="text-sm text-slate-500">Entregadas</div>
+        <div class="mt-3 text-3xl font-bold text-emerald-600">{{ $counts['entregadas'] }}</div>
+    </div>
+
+    <div class="bg-slate-50 rounded-2xl shadow-md border border-slate-300 p-6">
+        <div class="text-sm text-slate-500">Canceladas</div>
+        <div class="mt-3 text-3xl font-bold text-red-500">{{ $counts['canceladas'] }}</div>
     </div>
 </div>
 

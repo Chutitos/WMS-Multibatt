@@ -2,37 +2,53 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\OrderStatus;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StoreOrderRequest;
 use App\Models\Order;
+use App\Models\OrderEvent;
 use App\Models\OrderItem;
+use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class OrderController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $orders = Order::latest()->get();
+        $query = Order::query();
+
+        if ($request->filled('estado')) {
+            $query->where('estado', $request->string('estado'));
+        }
+
+        if ($request->filled('cliente')) {
+            $query->where('cliente_nombre', 'like', '%' . $request->string('cliente') . '%');
+        }
+
+        if ($request->filled('fecha_desde')) {
+            $query->whereDate('created_at', '>=', $request->date('fecha_desde'));
+        }
+
+        if ($request->filled('fecha_hasta')) {
+            $query->whereDate('created_at', '<=', $request->date('fecha_hasta'));
+        }
+
+        $orders = $query->latest()->paginate(15)->withQueryString();
 
         return view('orders.index', compact('orders'));
     }
 
     public function create()
     {
-        return view('orders.create');
+        $products = Product::where('active', true)->orderBy('name')->get();
+
+        return view('orders.create', compact('products'));
     }
 
-    public function store(Request $request)
+    public function store(StoreOrderRequest $request)
     {
-        $validated = $request->validate([
-            'cliente_nombre' => 'required|string|max:255',
-            'rut_cliente' => 'nullable|string|max:20',
-            'tipo_entrega' => 'required|string',
-            'observaciones' => 'nullable|string',
-            'productos' => 'required|array|min:1',
-            'productos.*.nombre' => 'required|string|max:255',
-            'productos.*.cantidad' => 'required|integer|min:1',
-        ]);
+        $validated = $request->validated();
 
         DB::beginTransaction();
 
@@ -43,7 +59,7 @@ class OrderController extends Controller
                 'cliente_nombre' => $validated['cliente_nombre'],
                 'rut_cliente' => $validated['rut_cliente'] ?? null,
                 'tipo_entrega' => $validated['tipo_entrega'],
-                'estado' => 'creado',
+                'estado' => OrderStatus::CREADO,
                 'observaciones' => $validated['observaciones'] ?? null,
                 'creado_por' => $request->user()->id,
                 'liberado_por' => null,
@@ -51,14 +67,24 @@ class OrderController extends Controller
             ]);
 
             foreach ($validated['productos'] as $producto) {
+                $product = Product::findOrFail($producto['product_id']);
+
                 OrderItem::create([
                     'order_id' => $order->id,
-                    'producto_codigo' => $producto['nombre'],
-                    'producto_nombre' => $producto['nombre'],
+                    'product_id' => $product->id,
+                    'producto_codigo' => $product->sku,
+                    'producto_nombre' => $product->name,
                     'cantidad_solicitada' => $producto['cantidad'],
                     'cantidad_confirmada' => 0,
                 ]);
             }
+
+            OrderEvent::create([
+                'order_id' => $order->id,
+                'tipo_evento' => 'creado',
+                'descripcion' => 'Orden creada.',
+                'user_id' => $request->user()->id,
+            ]);
 
             DB::commit();
 
@@ -72,29 +98,59 @@ class OrderController extends Controller
 
     public function show(Order $order)
     {
-        $order->load('items', 'creator', 'releaser');
+        $this->authorize('view', $order);
+
+        $order->load('items', 'creator', 'releaser', 'events.user');
 
         return view('orders.show', compact('order'));
     }
 
     public function liberar(Request $request, Order $order)
     {
-        if ($request->user()->role->name !== 'jefe_bodega') {
-            return redirect()->back()->with('error', 'No tienes permiso.');
-        }
-
-        if ($order->estado !== 'creado') {
+        if (! $order->estado->canTransitionTo(OrderStatus::LIBERADO)) {
             return redirect()->route('orders.show', $order)
                 ->with('error', 'Solo se pueden liberar órdenes en estado creado.');
         }
 
-        $order->update([
-            'estado' => 'liberado',
-            'liberado_por' => $request->user()->id,
-            'fecha_liberacion' => now(),
-        ]);
+        DB::transaction(function () use ($request, $order) {
+            $order->update([
+                'estado' => OrderStatus::LIBERADO,
+                'liberado_por' => $request->user()->id,
+                'fecha_liberacion' => now(),
+            ]);
+
+            OrderEvent::create([
+                'order_id' => $order->id,
+                'tipo_evento' => 'liberado',
+                'descripcion' => 'Orden liberada a bodega.',
+                'user_id' => $request->user()->id,
+            ]);
+        });
 
         return redirect()->route('orders.show', $order)
-            ->with('success', 'Orden liberada correctamente.');
+            ->with('success', 'Orden liberada correctamente. Ya está disponible en Bodega.');
+    }
+
+    public function cancelar(Request $request, Order $order)
+    {
+        if (! $order->canBeCancelledBy($request->user())) {
+            return redirect()->route('orders.show', $order)
+                ->with('error', 'No puedes cancelar esta orden en su estado actual.');
+        }
+
+        DB::transaction(function () use ($request, $order) {
+            $order->update([
+                'estado' => OrderStatus::CANCELADO,
+            ]);
+
+            OrderEvent::create([
+                'order_id' => $order->id,
+                'tipo_evento' => 'cancelado',
+                'descripcion' => 'Orden cancelada.',
+                'user_id' => $request->user()->id,
+            ]);
+        });
+
+        return redirect()->route('orders.index')->with('success', 'Orden cancelada correctamente.');
     }
 }

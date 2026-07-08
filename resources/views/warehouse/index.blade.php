@@ -36,9 +36,7 @@
                     </td>
 
                     <td class="px-6 py-4">
-                        <span class="inline-flex items-center rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-800">
-                            {{ $order->estado }}
-                        </span>
+                        <x-order-status-badge :estado="$order->estado" />
                     </td>
 
                     <td class="px-6 py-4 flex items-center gap-2">
@@ -70,5 +68,9 @@
             </tbody>
         </table>
     </div>
+</div>
+
+<div class="mt-6">
+    {{ $orders->links() }}
 </div>
 @endsection

@@ -4,6 +4,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ $title ?? 'WMS Multibatt' }}</title>
     <link rel="icon" type="image/png" href="{{ asset('icono-multibatt.png') }}">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
@@ -78,6 +79,30 @@
                                 : 'border-transparent text-slate-600 hover:text-slate-900 hover:border-slate-300' }}">
                             Usuarios
                         </a>
+
+                        <a href="{{ route('products.index') }}"
+                            class="pb-3 text-lg font-semibold border-b-2 transition tracking-wide
+                             {{ request()->routeIs('products.*')
+                                ? 'border-blue-600 text-blue-700'
+                                : 'border-transparent text-slate-600 hover:text-slate-900 hover:border-slate-300' }}">
+                            Productos
+                        </a>
+
+                        <a href="{{ route('locations.index') }}"
+                            class="pb-3 text-lg font-semibold border-b-2 transition tracking-wide
+                             {{ request()->routeIs('locations.*')
+                                ? 'border-blue-600 text-blue-700'
+                                : 'border-transparent text-slate-600 hover:text-slate-900 hover:border-slate-300' }}">
+                            Mapa de bodega
+                        </a>
+
+                        <a href="{{ route('product-locations.index') }}"
+                            class="pb-3 text-lg font-semibold border-b-2 transition tracking-wide
+                             {{ request()->routeIs('product-locations.*')
+                                ? 'border-blue-600 text-blue-700'
+                                : 'border-transparent text-slate-600 hover:text-slate-900 hover:border-slate-300' }}">
+                            Existencias
+                        </a>
                         @endif
 
                         {{-- JEFE DE BODEGA --}}
@@ -97,10 +122,26 @@
                                     : 'border-transparent text-slate-600 hover:text-slate-900 hover:border-slate-300' }}">
                             Órdenes
                         </a>
+
+                        <a href="{{ route('locations.index') }}"
+                            class="pb-3 text-lg font-semibold border-b-2 transition tracking-wide
+                                {{ request()->routeIs('locations.*')
+                                    ? 'border-blue-600 text-blue-700'
+                                    : 'border-transparent text-slate-600 hover:text-slate-900 hover:border-slate-300' }}">
+                            Mapa de bodega
+                        </a>
                         @endif
 
                         {{-- BODEGUERO --}}
                         @if (auth()->user()->role->name === 'bodeguero')
+                        <a href="{{ route('dashboard') }}"
+                            class="pb-3 text-lg font-semibold border-b-2 transition tracking-wide
+                                {{ request()->routeIs('dashboard')
+                                    ? 'border-blue-600 text-blue-700'
+                                    : 'border-transparent text-slate-600 hover:text-slate-900 hover:border-slate-300' }}">
+                            Inicio
+                        </a>
+
                         <a href="{{ route('bodega.index') }}"
                             class="pb-3 text-lg font-semibold border-b-2 transition tracking-wide
                                 {{ request()->routeIs('bodega.index')
@@ -123,6 +164,22 @@
                                     ? 'border-blue-600 text-blue-700'
                                     : 'border-transparent text-slate-600 hover:text-slate-900 hover:border-slate-300' }}">
                             Listas
+                        </a>
+
+                        <a href="{{ route('product-locations.index') }}"
+                            class="pb-3 text-lg font-semibold border-b-2 transition tracking-wide
+                                {{ request()->routeIs('product-locations.*')
+                                    ? 'border-blue-600 text-blue-700'
+                                    : 'border-transparent text-slate-600 hover:text-slate-900 hover:border-slate-300' }}">
+                            Existencias
+                        </a>
+
+                        <a href="{{ route('locations.index') }}"
+                            class="pb-3 text-lg font-semibold border-b-2 transition tracking-wide
+                                {{ request()->routeIs('locations.*')
+                                    ? 'border-blue-600 text-blue-700'
+                                    : 'border-transparent text-slate-600 hover:text-slate-900 hover:border-slate-300' }}">
+                            Mapa de bodega
                         </a>
                         @endif
 

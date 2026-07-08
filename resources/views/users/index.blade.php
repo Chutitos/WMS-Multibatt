@@ -23,6 +23,7 @@
                     <th class="p-4 text-left font-semibold text-slate-700">Nombre</th>
                     <th class="p-4 text-left font-semibold text-slate-700">Email</th>
                     <th class="p-4 text-left font-semibold text-slate-700">Rol</th>
+                    <th class="p-4 text-left font-semibold text-slate-700">Estado</th>
                     <th class="p-4 text-left font-semibold text-slate-700">Acciones</th>
                 </tr>
             </thead>
@@ -33,6 +34,13 @@
                     <td class="p-4 text-slate-900">{{ $user->name }}</td>
                     <td class="p-4 text-slate-900">{{ $user->email }}</td>
                     <td class="p-4 text-slate-900">{{ $user->role->name }}</td>
+                    <td class="p-4">
+                        @if ($user->activo)
+                        <span class="inline-flex items-center rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-800">Activo</span>
+                        @else
+                        <span class="inline-flex items-center rounded-full bg-slate-200 px-3 py-1 text-xs font-semibold text-slate-600">Inactivo</span>
+                        @endif
+                    </td>
                     <td class="p-4 flex gap-2">
 
                         <a href="{{ route('users.edit', $user) }}"
@@ -40,16 +48,18 @@
                             Editar
                         </a>
 
-                        <form method="POST" action="{{ route('users.destroy', $user) }}"
-                            onsubmit="return confirm('¿Seguro que quieres eliminar este usuario?')">
+                        @unless (auth()->id() === $user->id)
+                        <form method="POST" action="{{ route('users.toggle-activo', $user) }}"
+                            onsubmit="return confirm('{{ $user->activo ? '¿Desactivar este usuario? No podrá iniciar sesión.' : '¿Reactivar este usuario?' }}')">
                             @csrf
-                            @method('DELETE')
+                            @method('PATCH')
 
                             <button
-                                class="inline-flex items-center px-4 py-2 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700">
-                                Eliminar
+                                class="inline-flex items-center px-4 py-2 rounded-lg font-medium text-white {{ $user->activo ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700' }}">
+                                {{ $user->activo ? 'Desactivar' : 'Activar' }}
                             </button>
                         </form>
+                        @endunless
 
                     </td>
                 </tr>

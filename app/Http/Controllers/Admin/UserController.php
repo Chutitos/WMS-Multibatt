@@ -4,9 +4,10 @@ namespace App\Http\Controllers\Admin;
 
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StoreUserRequest;
+use App\Http\Requests\UpdateUserRequest;
 use App\Models\Role;
 use App\Models\User;
-use Illuminate\Http\Request;
 
 class UserController extends Controller
 {
@@ -24,14 +25,9 @@ class UserController extends Controller
         return view('users.create', compact('roles'));
     }
 
-    public function store(Request $request)
+    public function store(StoreUserRequest $request)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users',
-            'password' => 'required|min:4',
-            'role_id' => 'required|exists:roles,id',
-        ]);
+        $validated = $request->validated();
 
         User::create([
             'name' => $validated['name'],
@@ -50,14 +46,14 @@ class UserController extends Controller
         return view('users.edit', compact('user', 'roles'));
     }
 
-    public function update(Request $request, User $user)
+    public function update(UpdateUserRequest $request, User $user)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email,' . $user->id,
-            'password' => 'nullable|min:4',
-            'role_id' => 'required|exists:roles,id',
-        ]);
+        $validated = $request->validated();
+
+        if (! Auth::user()->can('changeRole', [$user, (int) $validated['role_id']])) {
+            return redirect()->back()->withInput()
+                ->with('error', 'No puedes quitarle el rol de administrador al último admin activo del sistema.');
+        }
 
         $data = [
             'name' => $validated['name'],
@@ -73,14 +69,19 @@ class UserController extends Controller
 
         return redirect()->route('users.index')->with('success', 'Usuario actualizado.');
     }
-    public function destroy(User $user)
+    public function toggleActivo(User $user)
     {
         if (Auth::id() === $user->id) {
-            return redirect()->back()->with('error', 'No puedes eliminar tu propio usuario.');
+            return redirect()->back()->with('error', 'No puedes cambiar el estado de tu propio usuario.');
         }
 
-        $user->delete();
+        if (! Auth::user()->can('toggleActivo', $user)) {
+            return redirect()->back()->with('error', 'No puedes desactivar al último administrador activo del sistema.');
+        }
 
-        return redirect()->route('users.index')->with('success', 'Usuario eliminado.');
+        $user->update(['activo' => ! $user->activo]);
+
+        return redirect()->route('users.index')
+            ->with('success', $user->activo ? 'Usuario activado.' : 'Usuario desactivado.');
     }
 }

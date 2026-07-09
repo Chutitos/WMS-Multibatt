@@ -2,10 +2,10 @@
 
 @php
 $rol = auth()->user()->role->name;
-// Estructura del rack (dimensiones): admin y jefe. Asignar/corregir
-// pallets: los 3 roles (el bodeguero guarda mercadería a diario).
+// Estructura del rack y pallets: admin y jefe. El bodeguero solo
+// consulta — sacar baterías es vía picking, no editando existencias.
 $puedeEditarEstructura = in_array($rol, ['admin', 'jefe_bodega'], true);
-$puedeAsignar = true;
+$puedeAsignar = $puedeEditarEstructura;
 @endphp
 
 @section('content')

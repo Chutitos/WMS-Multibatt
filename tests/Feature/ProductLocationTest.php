@@ -14,11 +14,11 @@ class ProductLocationTest extends TestCase
 
     public function test_no_se_puede_asignar_existencia_a_ubicacion_inactiva(): void
     {
-        $bodeguero = $this->makeUser('bodeguero');
+        $jefe = $this->makeUser('jefe_bodega');
         $product = $this->makeProduct();
         $location = $this->makeLocation(['activa' => false]);
 
-        $response = $this->actingAs($bodeguero)->post('/existencias', [
+        $response = $this->actingAs($jefe)->post('/existencias', [
             'product_id' => $product->id,
             'warehouse_location_id' => $location->id,
             'fecha_ingreso' => now()->toDateString(),
@@ -31,11 +31,11 @@ class ProductLocationTest extends TestCase
 
     public function test_no_se_puede_asignar_existencia_de_producto_inactivo(): void
     {
-        $bodeguero = $this->makeUser('bodeguero');
+        $jefe = $this->makeUser('jefe_bodega');
         $product = $this->makeProduct(['active' => false]);
         $location = $this->makeLocation();
 
-        $response = $this->actingAs($bodeguero)->post('/existencias', [
+        $response = $this->actingAs($jefe)->post('/existencias', [
             'product_id' => $product->id,
             'warehouse_location_id' => $location->id,
             'fecha_ingreso' => now()->toDateString(),
@@ -48,11 +48,11 @@ class ProductLocationTest extends TestCase
 
     public function test_crear_existencia_registra_evento_de_trazabilidad(): void
     {
-        $bodeguero = $this->makeUser('bodeguero');
+        $jefe = $this->makeUser('jefe_bodega');
         $product = $this->makeProduct();
         $location = $this->makeLocation();
 
-        $this->actingAs($bodeguero)->post('/existencias', [
+        $this->actingAs($jefe)->post('/existencias', [
             'product_id' => $product->id,
             'warehouse_location_id' => $location->id,
             'fecha_ingreso' => now()->toDateString(),
@@ -62,17 +62,17 @@ class ProductLocationTest extends TestCase
         $evento = ProductLocationEvent::first();
         $this->assertNotNull($evento);
         $this->assertSame('creada', $evento->accion);
-        $this->assertSame($bodeguero->id, $evento->user_id);
+        $this->assertSame($jefe->id, $evento->user_id);
     }
 
     public function test_editar_existencia_registra_evento_con_el_cambio(): void
     {
-        $bodeguero = $this->makeUser('bodeguero');
+        $jefe = $this->makeUser('jefe_bodega');
         $product = $this->makeProduct();
         $location = $this->makeLocation();
         $pl = $this->stockProductAt($product, $location, 10);
 
-        $this->actingAs($bodeguero)->patch("/existencias/{$pl->id}", [
+        $this->actingAs($jefe)->patch("/existencias/{$pl->id}", [
             'product_id' => $product->id,
             'warehouse_location_id' => $location->id,
             'lote' => $pl->lote,
@@ -88,12 +88,12 @@ class ProductLocationTest extends TestCase
 
     public function test_editar_sin_cambios_no_registra_evento(): void
     {
-        $bodeguero = $this->makeUser('bodeguero');
+        $jefe = $this->makeUser('jefe_bodega');
         $product = $this->makeProduct();
         $location = $this->makeLocation();
         $pl = $this->stockProductAt($product, $location, 10);
 
-        $this->actingAs($bodeguero)->patch("/existencias/{$pl->id}", [
+        $this->actingAs($jefe)->patch("/existencias/{$pl->id}", [
             'product_id' => $product->id,
             'warehouse_location_id' => $location->id,
             'lote' => $pl->lote,
@@ -106,13 +106,13 @@ class ProductLocationTest extends TestCase
 
     public function test_no_se_puede_mover_existencia_a_ubicacion_inactiva(): void
     {
-        $bodeguero = $this->makeUser('bodeguero');
+        $jefe = $this->makeUser('jefe_bodega');
         $product = $this->makeProduct();
         $location = $this->makeLocation();
         $inactiva = $this->makeLocation(['activa' => false]);
         $pl = $this->stockProductAt($product, $location, 10);
 
-        $response = $this->actingAs($bodeguero)->patch("/existencias/{$pl->id}", [
+        $response = $this->actingAs($jefe)->patch("/existencias/{$pl->id}", [
             'product_id' => $product->id,
             'warehouse_location_id' => $inactiva->id,
             'fecha_ingreso' => $pl->fecha_ingreso->toDateString(),
@@ -125,13 +125,13 @@ class ProductLocationTest extends TestCase
 
     public function test_se_puede_editar_existencia_cuya_ubicacion_actual_esta_inactiva(): void
     {
-        $bodeguero = $this->makeUser('bodeguero');
+        $jefe = $this->makeUser('jefe_bodega');
         $product = $this->makeProduct();
         $inactiva = $this->makeLocation(['activa' => false]);
         $pl = $this->stockProductAt($product, $inactiva, 10);
 
         // Mantener la ubicación inactiva actual es válido: solo se corrige la cantidad.
-        $this->actingAs($bodeguero)->patch("/existencias/{$pl->id}", [
+        $this->actingAs($jefe)->patch("/existencias/{$pl->id}", [
             'product_id' => $product->id,
             'warehouse_location_id' => $inactiva->id,
             'fecha_ingreso' => $pl->fecha_ingreso->toDateString(),
@@ -141,15 +141,29 @@ class ProductLocationTest extends TestCase
         $this->assertSame(3, $pl->fresh()->cantidad);
     }
 
-    public function test_bodeguero_no_puede_eliminar_existencias(): void
+    public function test_bodeguero_solo_consulta_no_agrega_ni_corrige(): void
     {
         $bodeguero = $this->makeUser('bodeguero');
         $product = $this->makeProduct();
         $location = $this->makeLocation();
         $pl = $this->stockProductAt($product, $location, 10);
 
+        // Ver existencias sí: lo necesita para encontrar baterías.
+        $this->actingAs($bodeguero)->get('/existencias')->assertOk();
+
+        // Agregar, corregir o eliminar: no — eso es del jefe o admin.
+        $this->actingAs($bodeguero)->get('/existencias/create')->assertForbidden();
+        $this->actingAs($bodeguero)->post('/existencias', [
+            'product_id' => $product->id,
+            'warehouse_location_id' => $location->id,
+            'fecha_ingreso' => now()->toDateString(),
+            'cantidad' => 5,
+        ])->assertForbidden();
+        $this->actingAs($bodeguero)->get("/existencias/{$pl->id}/edit")->assertForbidden();
+        $this->actingAs($bodeguero)->patch("/existencias/{$pl->id}", [])->assertForbidden();
         $this->actingAs($bodeguero)->delete("/existencias/{$pl->id}")->assertForbidden();
-        $this->assertNotNull($pl->fresh());
+
+        $this->assertSame(10, $pl->fresh()->cantidad);
     }
 
     public function test_admin_elimina_existencia_y_queda_evento_con_snapshot(): void
@@ -180,11 +194,13 @@ class ProductLocationTest extends TestCase
         $this->actingAs($admin)->get('/existencias')
             ->assertOk()
             ->assertSee('Historial')
+            ->assertSee('Editar')
             ->assertSee('Eliminar');
 
         $this->actingAs($bodeguero)->get('/existencias')
             ->assertOk()
-            ->assertSee('Editar')
+            ->assertSee('Solo consulta')
+            ->assertDontSee('Editar')
             ->assertDontSee('Eliminar');
     }
 
@@ -201,23 +217,25 @@ class ProductLocationTest extends TestCase
 
     public function test_formulario_edicion_muestra_ubicacion_inactiva_actual(): void
     {
-        $bodeguero = $this->makeUser('bodeguero');
+        $jefe = $this->makeUser('jefe_bodega');
         $product = $this->makeProduct();
         $inactiva = $this->makeLocation(['nombre' => 'Bodega vieja', 'activa' => false]);
         $pl = $this->stockProductAt($product, $inactiva, 5);
 
-        $this->actingAs($bodeguero)->get("/existencias/{$pl->id}/edit")
+        $this->actingAs($jefe)->get("/existencias/{$pl->id}/edit")
             ->assertOk()
             ->assertSee('Bodega vieja')
             ->assertSee('(inactiva)');
     }
 
-    public function test_historial_es_solo_para_admin(): void
+    public function test_historial_es_para_admin_y_jefe_no_para_bodeguero(): void
     {
         $admin = $this->makeUser('admin');
+        $jefe = $this->makeUser('jefe_bodega');
         $bodeguero = $this->makeUser('bodeguero');
 
         $this->actingAs($admin)->get('/existencias/historial')->assertOk();
+        $this->actingAs($jefe)->get('/existencias/historial')->assertOk();
         $this->actingAs($bodeguero)->get('/existencias/historial')->assertForbidden();
     }
 

@@ -41,13 +41,18 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/integracion', [ErpIntegrationController::class, 'index'])->name('erp.index');
     });
 
-    // ADMIN + JEFE: gestión operativa de la estructura física de bodega
-    // (crear/mover/renombrar/activar estantes y ver el historial de
-    // existencias). El jefe administra la bodega, no el sistema.
+    // ADMIN + JEFE: gestión operativa de la estructura física de bodega.
+    // El bodeguero SOLO SACA baterías (picking): agregar o corregir
+    // existencias es responsabilidad del jefe o del admin.
     Route::middleware(['role:admin,jefe_bodega'])->group(function () {
         Route::post('/ubicaciones', [WarehouseLocationController::class, 'store'])->name('locations.store');
         Route::patch('/ubicaciones/{warehouseLocation}', [WarehouseLocationController::class, 'update'])->name('locations.update');
+
         Route::get('/existencias/historial', [ProductLocationController::class, 'historial'])->name('product-locations.historial');
+        Route::get('/existencias/create', [ProductLocationController::class, 'create'])->name('product-locations.create');
+        Route::post('/existencias', [ProductLocationController::class, 'store'])->name('product-locations.store');
+        Route::get('/existencias/{productLocation}/edit', [ProductLocationController::class, 'edit'])->name('product-locations.edit');
+        Route::patch('/existencias/{productLocation}', [ProductLocationController::class, 'update'])->name('product-locations.update');
     });
 
     // Mapa de bodega: los 3 roles pueden consultarlo; solo admin puede editarlo
@@ -82,14 +87,10 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/orders/{order}/picking/escanear', [PickingController::class, 'escanear'])->name('orders.picking.escanear');
     });
 
-    // Existencias: los 3 roles operan la capa física — el bodeguero al
-    // guardar mercadería (putaway), el jefe al corregir ubicaciones.
+    // Existencias en modo consulta: los 3 roles pueden ver dónde está
+    // cada batería (el bodeguero lo necesita para encontrarlas).
     Route::middleware(['role:admin,jefe_bodega,bodeguero'])->group(function () {
         Route::get('/existencias', [ProductLocationController::class, 'index'])->name('product-locations.index');
-        Route::get('/existencias/create', [ProductLocationController::class, 'create'])->name('product-locations.create');
-        Route::post('/existencias', [ProductLocationController::class, 'store'])->name('product-locations.store');
-        Route::get('/existencias/{productLocation}/edit', [ProductLocationController::class, 'edit'])->name('product-locations.edit');
-        Route::patch('/existencias/{productLocation}', [ProductLocationController::class, 'update'])->name('product-locations.update');
     });
 });
 

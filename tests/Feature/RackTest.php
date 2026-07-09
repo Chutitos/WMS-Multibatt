@@ -14,11 +14,11 @@ class RackTest extends TestCase
 
     public function test_se_puede_asignar_pallet_a_un_puesto_del_rack(): void
     {
-        $bodeguero = $this->makeUser('bodeguero');
+        $jefe = $this->makeUser('jefe_bodega');
         $product = $this->makeProduct();
         $rack = $this->makeLocation(['columnas' => 4, 'niveles' => 3]);
 
-        $this->actingAs($bodeguero)->post('/existencias', [
+        $this->actingAs($jefe)->post('/existencias', [
             'product_id' => $product->id,
             'warehouse_location_id' => $rack->id,
             'columna' => 2,
@@ -34,11 +34,11 @@ class RackTest extends TestCase
 
     public function test_asignar_desde_la_grilla_vuelve_al_estante(): void
     {
-        $bodeguero = $this->makeUser('bodeguero');
+        $jefe = $this->makeUser('jefe_bodega');
         $product = $this->makeProduct();
         $rack = $this->makeLocation();
 
-        $this->actingAs($bodeguero)->post('/existencias', [
+        $this->actingAs($jefe)->post('/existencias', [
             'product_id' => $product->id,
             'warehouse_location_id' => $rack->id,
             'columna' => 1,
@@ -51,7 +51,7 @@ class RackTest extends TestCase
 
     public function test_no_se_puede_poner_dos_pallets_en_el_mismo_puesto(): void
     {
-        $bodeguero = $this->makeUser('bodeguero');
+        $jefe = $this->makeUser('jefe_bodega');
         $productA = $this->makeProduct();
         $productB = $this->makeProduct();
         $rack = $this->makeLocation();
@@ -65,7 +65,7 @@ class RackTest extends TestCase
             'cantidad' => 5,
         ]);
 
-        $this->actingAs($bodeguero)->post('/existencias', [
+        $this->actingAs($jefe)->post('/existencias', [
             'product_id' => $productB->id,
             'warehouse_location_id' => $rack->id,
             'columna' => 1,
@@ -79,7 +79,7 @@ class RackTest extends TestCase
 
     public function test_un_puesto_agotado_se_puede_reocupar(): void
     {
-        $bodeguero = $this->makeUser('bodeguero');
+        $jefe = $this->makeUser('jefe_bodega');
         $productA = $this->makeProduct();
         $productB = $this->makeProduct();
         $rack = $this->makeLocation();
@@ -93,7 +93,7 @@ class RackTest extends TestCase
             'cantidad' => 0,
         ]);
 
-        $this->actingAs($bodeguero)->post('/existencias', [
+        $this->actingAs($jefe)->post('/existencias', [
             'product_id' => $productB->id,
             'warehouse_location_id' => $rack->id,
             'columna' => 1,
@@ -105,11 +105,11 @@ class RackTest extends TestCase
 
     public function test_no_se_puede_asignar_a_un_puesto_que_no_existe_en_el_rack(): void
     {
-        $bodeguero = $this->makeUser('bodeguero');
+        $jefe = $this->makeUser('jefe_bodega');
         $product = $this->makeProduct();
         $rack = $this->makeLocation(['columnas' => 2, 'niveles' => 2]);
 
-        $this->actingAs($bodeguero)->post('/existencias', [
+        $this->actingAs($jefe)->post('/existencias', [
             'product_id' => $product->id,
             'warehouse_location_id' => $rack->id,
             'columna' => 3,
@@ -121,11 +121,11 @@ class RackTest extends TestCase
 
     public function test_columna_sin_nivel_es_invalido(): void
     {
-        $bodeguero = $this->makeUser('bodeguero');
+        $jefe = $this->makeUser('jefe_bodega');
         $product = $this->makeProduct();
         $rack = $this->makeLocation();
 
-        $this->actingAs($bodeguero)->post('/existencias', [
+        $this->actingAs($jefe)->post('/existencias', [
             'product_id' => $product->id,
             'warehouse_location_id' => $rack->id,
             'columna' => 1,
@@ -173,7 +173,7 @@ class RackTest extends TestCase
 
     public function test_detalle_del_rack_muestra_grilla_con_pallets_y_puestos_libres(): void
     {
-        $bodeguero = $this->makeUser('bodeguero');
+        $jefe = $this->makeUser('jefe_bodega');
         $product = $this->makeProduct(['name' => 'Batería 60Ah']);
         $rack = $this->makeLocation(['nombre' => 'Rack Norte', 'columnas' => 2, 'niveles' => 2]);
 
@@ -186,7 +186,7 @@ class RackTest extends TestCase
             'cantidad' => 12,
         ]);
 
-        $this->actingAs($bodeguero)->get("/ubicaciones/{$rack->id}")
+        $this->actingAs($jefe)->get("/ubicaciones/{$rack->id}")
             ->assertOk()
             ->assertSee('Rack Norte')
             ->assertSee('Batería 60Ah')
@@ -194,15 +194,30 @@ class RackTest extends TestCase
             ->assertSee('+ Asignar');
     }
 
-    public function test_existencia_sin_puesto_aparece_como_pendiente_de_ubicar(): void
+    public function test_bodeguero_ve_el_rack_en_modo_consulta(): void
     {
         $bodeguero = $this->makeUser('bodeguero');
+        $product = $this->makeProduct(['name' => 'Batería 60Ah']);
+        $rack = $this->makeLocation(['nombre' => 'Rack Norte']);
+        $this->stockProductAt($product, $rack, 12);
+
+        $this->actingAs($bodeguero)->get("/ubicaciones/{$rack->id}")
+            ->assertOk()
+            ->assertSee('Rack Norte')
+            ->assertSee('Batería 60Ah')
+            ->assertDontSee('+ Asignar')
+            ->assertDontSee('Dimensiones del rack');
+    }
+
+    public function test_existencia_sin_puesto_aparece_como_pendiente_de_ubicar(): void
+    {
+        $jefe = $this->makeUser('jefe_bodega');
         $product = $this->makeProduct(['name' => 'Batería suelta']);
         $rack = $this->makeLocation();
 
         $this->stockProductAt($product, $rack, 7);
 
-        $this->actingAs($bodeguero)->get("/ubicaciones/{$rack->id}")
+        $this->actingAs($jefe)->get("/ubicaciones/{$rack->id}")
             ->assertOk()
             ->assertSee('sin puesto asignado')
             ->assertSee('Batería suelta')

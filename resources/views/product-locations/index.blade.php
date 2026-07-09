@@ -3,16 +3,18 @@
 @php
 $rol = auth()->user()->role->name;
 $esAdmin = $rol === 'admin';
-$puedeVerHistorial = in_array($rol, ['admin', 'jefe_bodega'], true);
+// El bodeguero solo consulta: sacar baterías es vía picking, y
+// agregar/corregir existencias es del jefe o del admin.
+$puedeGestionar = in_array($rol, ['admin', 'jefe_bodega'], true);
 @endphp
 
 @section('content')
 <x-wms.page-header title="Existencias por ubicación" subtitle="Qué producto hay guardado en cada ubicación de la bodega, ordenado por antigüedad (FIFO).">
     <x-slot:actions>
-        @if ($puedeVerHistorial)
+        @if ($puedeGestionar)
         <x-wms.btn variant="secondary" href="{{ route('product-locations.historial') }}">Historial</x-wms.btn>
-        @endif
         <x-wms.btn href="{{ route('product-locations.create') }}">+ Asignar existencia</x-wms.btn>
+        @endif
     </x-slot:actions>
 </x-wms.page-header>
 
@@ -68,7 +70,9 @@ $puedeVerHistorial = in_array($rol, ['admin', 'jefe_bodega'], true);
                     </td>
                     <td class="px-6 py-4">
                         <div class="flex items-center gap-2 flex-wrap">
+                            @if ($puedeGestionar)
                             <x-wms.btn size="sm" href="{{ route('product-locations.edit', $pl) }}">Editar</x-wms.btn>
+                            @endif
 
                             @if ($esAdmin)
                             <form method="POST" action="{{ route('product-locations.destroy', $pl) }}"
@@ -78,6 +82,10 @@ $puedeVerHistorial = in_array($rol, ['admin', 'jefe_bodega'], true);
                                 <x-wms.btn size="sm" variant="danger">Eliminar</x-wms.btn>
                             </form>
                             @endif
+
+                            @unless ($puedeGestionar)
+                            <span class="text-sm text-slate-400">Solo consulta</span>
+                            @endunless
                         </div>
                     </td>
                 </tr>

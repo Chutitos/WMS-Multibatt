@@ -26,7 +26,6 @@ class BatteryWmsTest extends TestCase
             'tipo' => 'auto',
             'voltaje' => '12V',
             'capacidad_ah' => 75,
-            'meses_recarga' => 6,
             'stock_minimo' => 4,
             'active' => 1,
         ])->assertRedirect('/productos');
@@ -46,7 +45,6 @@ class BatteryWmsTest extends TestCase
             'sku' => 'BAT-X',
             'name' => 'Batería X',
             'tipo' => 'lavadora',
-            'meses_recarga' => 6,
             'stock_minimo' => 0,
         ])->assertSessionHasErrors('tipo');
     }
@@ -66,52 +64,6 @@ class BatteryWmsTest extends TestCase
             ->assertOk()
             ->assertSee('Batería moto 7Ah')
             ->assertDontSee('Batería camión 180Ah');
-    }
-
-    public function test_pallet_antiguo_aparece_como_por_recargar(): void
-    {
-        $bodeguero = $this->makeUser('bodeguero');
-        $product = $this->makeProduct(['name' => 'Batería vieja']); // meses_recarga default 6
-        $productFresco = $this->makeProduct(['name' => 'Batería fresca']);
-        $rack = $this->makeLocation();
-
-        $this->stockProductAt($product, $rack, 5, now()->subMonths(7)->toDateString());
-        $this->stockProductAt($productFresco, $rack, 5, now()->subMonth()->toDateString());
-
-        // Badge en el listado completo.
-        $this->actingAs($bodeguero)->get('/existencias')
-            ->assertOk()
-            ->assertSee('⚡ Recargar');
-
-        // El filtro deja solo la antigua.
-        $this->actingAs($bodeguero)->get('/existencias?recarga=1')
-            ->assertOk()
-            ->assertSee('Batería vieja')
-            ->assertDontSee('Batería fresca');
-    }
-
-    public function test_pallet_agotado_no_cuenta_para_recarga(): void
-    {
-        $bodeguero = $this->makeUser('bodeguero');
-        $product = $this->makeProduct(['name' => 'Batería agotada antigua']);
-        $rack = $this->makeLocation();
-        $this->stockProductAt($product, $rack, 0, now()->subMonths(12)->toDateString());
-
-        $this->actingAs($bodeguero)->get('/existencias?recarga=1')
-            ->assertOk()
-            ->assertDontSee('Batería agotada antigua');
-    }
-
-    public function test_dashboard_bodeguero_avisa_pallets_por_recargar(): void
-    {
-        $bodeguero = $this->makeUser('bodeguero');
-        $product = $this->makeProduct();
-        $rack = $this->makeLocation();
-        $this->stockProductAt($product, $rack, 5, now()->subMonths(8)->toDateString());
-
-        $this->actingAs($bodeguero)->get('/dashboard')
-            ->assertOk()
-            ->assertSee('necesita recarga');
     }
 
     public function test_dashboard_jefe_avisa_baterias_bajo_stock_minimo(): void

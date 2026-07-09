@@ -26,7 +26,6 @@ class StoreProductRequest extends FormRequest
             'tipo' => ['nullable', Rule::in(array_keys(Product::TIPOS))],
             'voltaje' => 'nullable|string|max:20',
             'capacidad_ah' => 'nullable|integer|min:1|max:5000',
-            'meses_recarga' => 'required|integer|min:1|max:36',
             'stock_minimo' => 'required|integer|min:0',
             'description' => 'nullable|string',
             'active' => 'boolean',

@@ -37,18 +37,6 @@ class ProductLocationController extends Controller
             });
         }
 
-        if ($request->boolean('recarga')) {
-            // El plazo de recarga es por producto (meses_recarga), así que
-            // se resuelve en PHP; el volumen de una bodega física lo permite.
-            $ids = $query->clone()
-                ->where('cantidad', '>', 0)
-                ->get()
-                ->filter(fn ($pl) => $pl->necesitaRecarga())
-                ->pluck('id');
-
-            $query->whereIn('id', $ids);
-        }
-
         $productLocations = $query->paginate(20)->withQueryString();
 
         return view('product-locations.index', compact('productLocations'));

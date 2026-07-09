@@ -31,7 +31,6 @@ class Product extends Model
         'tipo',
         'voltaje',
         'capacidad_ah',
-        'meses_recarga',
         'stock_minimo',
         'description',
         'active',
@@ -40,7 +39,6 @@ class Product extends Model
     protected $casts = [
         'active' => 'boolean',
         'capacidad_ah' => 'integer',
-        'meses_recarga' => 'integer',
         'stock_minimo' => 'integer',
     ];
 

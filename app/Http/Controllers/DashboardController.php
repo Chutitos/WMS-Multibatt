@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Enums\OrderStatus;
 use App\Models\Order;
 use App\Models\Product;
-use App\Models\ProductLocation;
 use Illuminate\Http\Request;
 
 class DashboardController extends Controller
@@ -14,15 +13,8 @@ class DashboardController extends Controller
     {
         $user = $request->user();
 
-        // Alertas propias de una bodega de baterías: pallets que llevan
-        // demasiado tiempo almacenados (necesitan recarga) y baterías
-        // cuya existencia física cayó bajo su mínimo.
-        $porRecargar = ProductLocation::with('product')
-            ->where('cantidad', '>', 0)
-            ->get()
-            ->filter(fn ($pl) => $pl->necesitaRecarga())
-            ->count();
-
+        // Alerta de bodega: baterías cuya existencia física cayó bajo su
+        // mínimo definido en el catálogo.
         $bajoStock = Product::where('active', true)
             ->where('stock_minimo', '>', 0)
             ->withSum('productLocations as existencia_fisica', 'cantidad')
@@ -39,7 +31,7 @@ class DashboardController extends Controller
                 'canceladas' => Order::where('estado', OrderStatus::CANCELADO)->count(),
             ];
 
-            return view('dashboard.jefe', compact('counts', 'porRecargar', 'bajoStock'));
+            return view('dashboard.jefe', compact('counts', 'bajoStock'));
         }
 
         if ($user->role->name === 'bodeguero') {
@@ -49,7 +41,7 @@ class DashboardController extends Controller
                 'listas' => Order::where('estado', OrderStatus::LISTO)->count(),
             ];
 
-            return view('dashboard.bodega', compact('counts', 'porRecargar', 'bajoStock'));
+            return view('dashboard.bodega', compact('counts'));
         }
 
         abort(403);

@@ -51,15 +51,9 @@
         <div class="border-t border-slate-200 pt-5">
             <h3 class="text-lg font-bold text-slate-900 mb-4">Reglas de bodega</h3>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <x-wms.field label="Meses para recarga" name="meses_recarga" hint="Una batería almacenada más de estos meses aparecerá como '⚡ Recargar'.">
-                    <x-wms.input type="number" name="meses_recarga" min="1" max="36" value="{{ old('meses_recarga', 6) }}" required />
-                </x-wms.field>
-
-                <x-wms.field label="Stock mínimo físico" name="stock_minimo" hint="0 = sin alerta. Si la existencia baja de aquí, se avisa en el inicio.">
-                    <x-wms.input type="number" name="stock_minimo" min="0" value="{{ old('stock_minimo', 0) }}" required />
-                </x-wms.field>
-            </div>
+            <x-wms.field label="Stock mínimo físico" name="stock_minimo" hint="0 = sin alerta. Si la existencia baja de aquí, se avisa en el inicio.">
+                <x-wms.input type="number" name="stock_minimo" min="0" value="{{ old('stock_minimo', 0) }}" required />
+            </x-wms.field>
         </div>
 
         <x-wms.field label="Descripción" name="description" :optional="true">

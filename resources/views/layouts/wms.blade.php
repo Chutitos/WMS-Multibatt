@@ -63,6 +63,7 @@
                         ['route' => 'products.index', 'match' => 'products.*', 'label' => 'Productos'],
                         ['route' => 'locations.index', 'match' => 'locations.*', 'label' => 'Mapa de bodega'],
                         ['route' => 'product-locations.index', 'match' => 'product-locations.*', 'label' => 'Existencias'],
+                        ['route' => 'erp.index', 'match' => 'erp.*', 'label' => 'ERP'],
                     ],
                     'jefe_bodega' => [
                         ['route' => 'dashboard', 'match' => 'dashboard', 'label' => 'Inicio'],

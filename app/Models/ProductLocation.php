@@ -48,21 +48,6 @@ class ProductLocation extends Model
     }
 
     /**
-     * Una batería almacenada se descarga sola: pasados los meses de
-     * recarga del producto (default 6) hay que recargarla o se sulfata.
-     */
-    public function necesitaRecarga(): bool
-    {
-        if ($this->cantidad <= 0) {
-            return false;
-        }
-
-        $meses = $this->product->meses_recarga ?? 6;
-
-        return $this->fecha_ingreso->lte(now()->subMonths($meses));
-    }
-
-    /**
      * Con existencia disponible, ordenado FIFO (el lote más antiguo primero).
      */
     public function scopeDisponibleFifo(Builder $query, int $productId): Builder

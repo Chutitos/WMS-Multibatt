@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\ErpIntegrationController;
 use App\Http\Controllers\Admin\OrderController;
 use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Admin\WarehouseLocationController;
@@ -41,6 +42,8 @@ Route::middleware(['auth'])->group(function () {
         // el bodeguero corrige editando (queda trazado), no borrando.
         Route::get('/existencias/historial', [ProductLocationController::class, 'historial'])->name('product-locations.historial');
         Route::delete('/existencias/{productLocation}', [ProductLocationController::class, 'destroy'])->name('product-locations.destroy');
+
+        Route::get('/integracion', [ErpIntegrationController::class, 'index'])->name('erp.index');
     });
 
     // Mapa de bodega: los 3 roles pueden consultarlo; solo admin puede editarlo

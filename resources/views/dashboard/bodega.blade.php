@@ -8,14 +8,6 @@
     </p>
 </div>
 
-@if ($porRecargar > 0)
-<a href="{{ route('product-locations.index', ['recarga' => 1]) }}"
-    class="block mb-6 bg-amber-50 border-4 border-amber-300 rounded-2xl px-6 py-5 hover:bg-amber-100 transition">
-    <span class="text-2xl font-bold text-amber-900">⚡ {{ $porRecargar }} {{ $porRecargar === 1 ? 'pallet necesita' : 'pallets necesitan' }} recarga</span>
-    <span class="block mt-1 text-lg text-amber-800">Llevan demasiado tiempo guardados. Toca aquí para ver cuáles son.</span>
-</a>
-@endif
-
 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
     <a href="{{ route('bodega.index') }}"
         class="block bg-blue-50 border-4 border-blue-200 rounded-3xl p-8 text-center hover:bg-blue-100 hover:border-blue-400 transition">

@@ -11,11 +11,10 @@ use App\Http\Controllers\Warehouse\PickingController;
 use App\Http\Controllers\Admin\UserController;
 use Illuminate\Support\Facades\Route;
 
-// La raíz lleva directo al trabajo: al dashboard si hay sesión,
-// al login si no (antes mostraba la página de bienvenida de Laravel).
-Route::get('/', function () {
-    return redirect(auth()->check() ? route('dashboard') : route('login'));
-});
+// La raíz lleva directo al trabajo: al dashboard si hay sesión, al
+// login si no. Va en un controlador (no closure) para que
+// `php artisan route:cache` funcione en el deploy.
+Route::get('/', [DashboardController::class, 'root']);
 
 Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
@@ -35,15 +34,20 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/productos/{product}/edit', [ProductController::class, 'edit'])->name('products.edit');
         Route::patch('/productos/{product}', [ProductController::class, 'update'])->name('products.update');
 
-        Route::post('/ubicaciones', [WarehouseLocationController::class, 'store'])->name('locations.store');
-        Route::patch('/ubicaciones/{warehouseLocation}', [WarehouseLocationController::class, 'update'])->name('locations.update');
-
-        // Eliminar una existencia y ver su historial son solo de admin;
-        // el bodeguero corrige editando (queda trazado), no borrando.
-        Route::get('/existencias/historial', [ProductLocationController::class, 'historial'])->name('product-locations.historial');
+        // Eliminar una existencia es solo de admin: jefe y bodeguero
+        // corrigen editando (queda trazado), no borrando.
         Route::delete('/existencias/{productLocation}', [ProductLocationController::class, 'destroy'])->name('product-locations.destroy');
 
         Route::get('/integracion', [ErpIntegrationController::class, 'index'])->name('erp.index');
+    });
+
+    // ADMIN + JEFE: gestión operativa de la estructura física de bodega
+    // (crear/mover/renombrar/activar estantes y ver el historial de
+    // existencias). El jefe administra la bodega, no el sistema.
+    Route::middleware(['role:admin,jefe_bodega'])->group(function () {
+        Route::post('/ubicaciones', [WarehouseLocationController::class, 'store'])->name('locations.store');
+        Route::patch('/ubicaciones/{warehouseLocation}', [WarehouseLocationController::class, 'update'])->name('locations.update');
+        Route::get('/existencias/historial', [ProductLocationController::class, 'historial'])->name('product-locations.historial');
     });
 
     // Mapa de bodega: los 3 roles pueden consultarlo; solo admin puede editarlo
@@ -74,14 +78,18 @@ Route::middleware(['auth'])->group(function () {
         Route::patch('/orders/{order}/confirmar', [PreparationController::class, 'confirmar'])->name('orders.confirmar');
         Route::patch('/orders/{order}/entregar', [PreparationController::class, 'entregar'])->name('orders.entregar');
 
+        Route::get('/orders/{order}/picking', [PickingController::class, 'show'])->name('orders.picking');
+        Route::post('/orders/{order}/picking/escanear', [PickingController::class, 'escanear'])->name('orders.picking.escanear');
+    });
+
+    // Existencias: los 3 roles operan la capa física — el bodeguero al
+    // guardar mercadería (putaway), el jefe al corregir ubicaciones.
+    Route::middleware(['role:admin,jefe_bodega,bodeguero'])->group(function () {
         Route::get('/existencias', [ProductLocationController::class, 'index'])->name('product-locations.index');
         Route::get('/existencias/create', [ProductLocationController::class, 'create'])->name('product-locations.create');
         Route::post('/existencias', [ProductLocationController::class, 'store'])->name('product-locations.store');
         Route::get('/existencias/{productLocation}/edit', [ProductLocationController::class, 'edit'])->name('product-locations.edit');
         Route::patch('/existencias/{productLocation}', [ProductLocationController::class, 'update'])->name('product-locations.update');
-
-        Route::get('/orders/{order}/picking', [PickingController::class, 'show'])->name('orders.picking');
-        Route::post('/orders/{order}/picking/escanear', [PickingController::class, 'escanear'])->name('orders.picking.escanear');
     });
 });
 

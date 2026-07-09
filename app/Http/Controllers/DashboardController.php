@@ -9,6 +9,11 @@ use Illuminate\Http\Request;
 
 class DashboardController extends Controller
 {
+    public function root()
+    {
+        return redirect(auth()->check() ? route('dashboard') : route('login'));
+    }
+
     public function index(Request $request)
     {
         $user = $request->user();

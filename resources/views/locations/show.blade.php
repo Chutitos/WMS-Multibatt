@@ -2,8 +2,10 @@
 
 @php
 $rol = auth()->user()->role->name;
-$esAdmin = $rol === 'admin';
-$puedeAsignar = in_array($rol, ['admin', 'bodeguero'], true);
+// Estructura del rack (dimensiones): admin y jefe. Asignar/corregir
+// pallets: los 3 roles (el bodeguero guarda mercadería a diario).
+$puedeEditarEstructura = in_array($rol, ['admin', 'jefe_bodega'], true);
+$puedeAsignar = true;
 @endphp
 
 @section('content')
@@ -94,7 +96,7 @@ $puedeAsignar = in_array($rol, ['admin', 'bodeguero'], true);
 </div>
 @endif
 
-@if ($esAdmin)
+@if ($puedeEditarEstructura)
 <div class="mt-6 max-w-xl bg-slate-50 border border-slate-300 rounded-2xl p-6">
     <h3 class="text-xl font-bold text-slate-900 mb-1">Dimensiones del rack</h3>
     <p class="text-base text-slate-600 mb-4">

@@ -1,16 +1,18 @@
 @extends('layouts.wms')
 
 @php
-$esAdmin = auth()->user()->role->name === 'admin';
+// Admin y jefe de bodega administran la estructura física; el
+// bodeguero consulta el mapa en modo lectura.
+$puedeEditar = in_array(auth()->user()->role->name, ['admin', 'jefe_bodega'], true);
 @endphp
 
 @section('content')
 <x-wms.page-header title="Mapa de bodega"
-    :subtitle="$esAdmin
+    :subtitle="$puedeEditar
         ? 'Arrastra las ubicaciones para armar el mapa. Haz clic (sin arrastrar) para ver qué hay guardado.'
         : 'Vista de solo lectura. Haz clic en una ubicación para ver qué hay guardado ahí.'">
     <x-slot:actions>
-        @if ($esAdmin)
+        @if ($puedeEditar)
         <button type="button" id="btn-agregar-ubicacion"
             class="inline-flex items-center px-5 py-3 bg-blue-600 text-white rounded-xl text-base font-semibold hover:bg-blue-700 transition">
             + Crear estante
@@ -29,7 +31,7 @@ $esAdmin = auth()->user()->role->name === 'admin';
     ]);
     $ocupada = $contenido->sum('cantidad') > 0;
     @endphp
-    <div class="ubicacion-box absolute select-none rounded-lg border-2 shadow-sm flex flex-col items-center justify-center p-2 text-center {{ $esAdmin ? 'cursor-move' : 'cursor-pointer' }} {{ $location->activa ? 'bg-blue-50 ' . ($ocupada ? 'border-blue-400' : 'border-slate-300') : 'bg-slate-200 border-slate-300 opacity-60' }}"
+    <div class="ubicacion-box absolute select-none rounded-lg border-2 shadow-sm flex flex-col items-center justify-center p-2 text-center {{ $puedeEditar ? 'cursor-move' : 'cursor-pointer' }} {{ $location->activa ? 'bg-blue-50 ' . ($ocupada ? 'border-blue-400' : 'border-slate-300') : 'bg-slate-200 border-slate-300 opacity-60' }}"
         data-id="{{ $location->id }}"
         data-nombre="{{ $location->nombre }}"
         data-codigo="{{ $location->codigo }}"
@@ -59,7 +61,7 @@ $esAdmin = auth()->user()->role->name === 'admin';
                 class="block w-full text-center px-3 py-2 rounded-lg text-sm font-semibold bg-blue-600 text-white hover:bg-blue-700">
                 Abrir estante
             </a>
-            @if ($esAdmin)
+            @if ($puedeEditar)
             <button type="button" id="popover-renombrar"
                 class="w-full px-3 py-2 rounded-lg text-sm font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200">
                 Cambiar nombre
@@ -76,7 +78,7 @@ $esAdmin = auth()->user()->role->name === 'admin';
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        const esAdmin = @json($esAdmin);
+        const esAdmin = @json($puedeEditar);
         const mapa = document.getElementById('mapa');
         const btnAgregar = document.getElementById('btn-agregar-ubicacion');
 

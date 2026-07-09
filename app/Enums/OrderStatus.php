@@ -11,15 +11,19 @@ enum OrderStatus: string
     case ENTREGADO = 'entregado';
     case CANCELADO = 'cancelado';
 
+    /**
+     * Mismo vocabulario que la navegación y las pantallas de bodega:
+     * el operario ve una sola palabra para cada estado en todo el sistema.
+     */
     public function label(): string
     {
         return match ($this) {
-            self::CREADO => 'Creado',
-            self::LIBERADO => 'Liberado',
+            self::CREADO => 'Creada',
+            self::LIBERADO => 'Por preparar',
             self::PREPARANDO => 'Preparando',
-            self::LISTO => 'Listo',
-            self::ENTREGADO => 'Entregado',
-            self::CANCELADO => 'Cancelado',
+            self::LISTO => 'Lista',
+            self::ENTREGADO => 'Entregada',
+            self::CANCELADO => 'Cancelada',
         };
     }
 

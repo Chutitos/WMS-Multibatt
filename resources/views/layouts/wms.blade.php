@@ -69,6 +69,7 @@
                         ['route' => 'dashboard', 'match' => 'dashboard', 'label' => 'Inicio'],
                         ['route' => 'orders.index', 'match' => 'orders.*', 'label' => 'Órdenes'],
                         ['route' => 'locations.index', 'match' => 'locations.*', 'label' => 'Mapa de bodega'],
+                        ['route' => 'product-locations.index', 'match' => 'product-locations.*', 'label' => 'Existencias'],
                     ],
                     'bodeguero' => [
                         ['route' => 'dashboard', 'match' => 'dashboard', 'label' => 'Inicio'],

@@ -1,13 +1,15 @@
 @extends('layouts.wms')
 
 @php
-$esAdmin = auth()->user()->role->name === 'admin';
+$rol = auth()->user()->role->name;
+$esAdmin = $rol === 'admin';
+$puedeVerHistorial = in_array($rol, ['admin', 'jefe_bodega'], true);
 @endphp
 
 @section('content')
 <x-wms.page-header title="Existencias por ubicación" subtitle="Qué producto hay guardado en cada ubicación de la bodega, ordenado por antigüedad (FIFO).">
     <x-slot:actions>
-        @if ($esAdmin)
+        @if ($puedeVerHistorial)
         <x-wms.btn variant="secondary" href="{{ route('product-locations.historial') }}">Historial</x-wms.btn>
         @endif
         <x-wms.btn href="{{ route('product-locations.create') }}">+ Asignar existencia</x-wms.btn>

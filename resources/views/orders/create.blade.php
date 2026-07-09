@@ -8,8 +8,12 @@
 
     @if ($products->isEmpty())
     <div class="mb-6 rounded-xl border-2 border-amber-200 bg-amber-50 px-5 py-4 text-amber-800 text-base">
-        Todavía no hay productos activos en el catálogo.
+        Todavía no hay baterías activas en el catálogo.
+        @if (auth()->user()->role->name === 'admin')
         <a href="{{ route('products.create') }}" class="font-semibold underline">Crea un producto</a> antes de armar una orden.
+        @else
+        Pídele al administrador que agregue las baterías antes de armar una orden.
+        @endif
     </div>
     @endif
 

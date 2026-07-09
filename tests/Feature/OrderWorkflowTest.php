@@ -112,6 +112,72 @@ class OrderWorkflowTest extends TestCase
         $this->actingAs($bodeguero)->get("/orders/{$order->id}")->assertForbidden();
     }
 
+    public function test_cancelar_orden_escaneada_devuelve_el_stock_a_sus_estantes(): void
+    {
+        $admin = $this->makeUser('admin');
+        $bodeguero = $this->makeUser('bodeguero');
+        $product = $this->makeProduct(['sku' => 'BAT-CANCEL']);
+        $estanteViejo = $this->makeLocation(['nombre' => 'Estante viejo']);
+        $estanteNuevo = $this->makeLocation(['nombre' => 'Estante nuevo']);
+
+        // FIFO repartirá el picking entre los dos estantes: 2 del viejo, 1 del nuevo.
+        $viejo = $this->stockProductAt($product, $estanteViejo, 2, '2026-01-01');
+        $nuevo = $this->stockProductAt($product, $estanteNuevo, 5, '2026-05-01');
+
+        $this->actingAs($admin)->post('/orders', [
+            'cliente_nombre' => 'Cliente Arrepentido',
+            'tipo_entrega' => 'retiro',
+            'productos' => [['product_id' => $product->id, 'cantidad' => 3]],
+        ]);
+        $order = Order::latest('id')->first();
+
+        $this->actingAs($bodeguero)->patch("/orders/{$order->id}/preparar");
+
+        for ($i = 0; $i < 3; $i++) {
+            $this->actingAs($bodeguero)
+                ->postJson("/orders/{$order->id}/picking/escanear", ['codigo' => 'BAT-CANCEL'])
+                ->assertOk();
+        }
+
+        // Stock descontado según FIFO.
+        $this->assertSame(0, $viejo->fresh()->cantidad);
+        $this->assertSame(4, $nuevo->fresh()->cantidad);
+
+        // Admin cancela: cada unidad vuelve exactamente al pallet de origen.
+        $this->actingAs($admin)->patch("/orders/{$order->id}/cancelar")->assertRedirect();
+
+        $this->assertSame('cancelado', $order->fresh()->estado->value);
+        $this->assertSame(2, $viejo->fresh()->cantidad);
+        $this->assertSame(5, $nuevo->fresh()->cantidad);
+
+        // La devolución queda en ambos historiales.
+        $this->assertSame(2, \App\Models\ProductLocationEvent::where('accion', 'devuelta')->count());
+        $this->assertStringContainsString(
+            'Se devolvieron 3',
+            OrderEvent::where('order_id', $order->id)->where('tipo_evento', 'cancelado')->first()->descripcion,
+        );
+    }
+
+    public function test_cancelar_orden_sin_escaneos_no_toca_el_stock(): void
+    {
+        $jefe = $this->makeUser('jefe_bodega');
+        $product = $this->makeProduct();
+        $location = $this->makeLocation();
+        $pl = $this->stockProductAt($product, $location, 5);
+
+        $this->actingAs($jefe)->post('/orders', [
+            'cliente_nombre' => 'Cliente Sin Escaneo',
+            'tipo_entrega' => 'retiro',
+            'productos' => [['product_id' => $product->id, 'cantidad' => 2]],
+        ]);
+        $order = Order::latest('id')->first();
+
+        $this->actingAs($jefe)->patch("/orders/{$order->id}/cancelar")->assertRedirect();
+
+        $this->assertSame(5, $pl->fresh()->cantidad);
+        $this->assertSame(0, \App\Models\ProductLocationEvent::where('accion', 'devuelta')->count());
+    }
+
     public function test_cancelar_solo_disponible_mientras_no_este_preparando(): void
     {
         $jefe = $this->makeUser('jefe_bodega');

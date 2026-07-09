@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\OrderEvent;
 use App\Models\OrderItem;
+use App\Models\OrderItemPick;
 use App\Models\Product;
 use App\Models\ProductLocation;
 use Illuminate\Http\Request;
@@ -96,6 +97,17 @@ class PickingController extends Controller
 
                 $item->increment('cantidad_confirmada');
                 $location->decrement('cantidad');
+
+                // Línea de picking: registra de qué pallet salió la unidad
+                // para poder devolverla exactamente ahí si se cancela.
+                $pick = OrderItemPick::firstOrCreate([
+                    'order_item_id' => $item->id,
+                    'product_location_id' => $location->id,
+                ], [
+                    'warehouse_location_id' => $location->warehouse_location_id,
+                    'cantidad' => 0,
+                ]);
+                $pick->increment('cantidad');
 
                 OrderEvent::create([
                     'order_id' => $order->id,

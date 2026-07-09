@@ -30,6 +30,7 @@
                             'creada' => 'bg-green-100 text-green-800',
                             'editada' => 'bg-orange-100 text-orange-800',
                             'eliminada' => 'bg-red-100 text-red-800',
+                            'devuelta' => 'bg-blue-100 text-blue-800',
                             default => 'bg-slate-100 text-slate-700',
                         };
                         @endphp

@@ -9,6 +9,8 @@ use App\Models\Order;
 use App\Models\OrderEvent;
 use App\Models\OrderItem;
 use App\Models\Product;
+use App\Models\ProductLocation;
+use App\Models\ProductLocationEvent;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -162,7 +164,13 @@ class OrderController extends Controller
                 ->with('error', 'No puedes cancelar esta orden en su estado actual.');
         }
 
-        DB::transaction(function () use ($request, $order) {
+        $devueltas = 0;
+
+        DB::transaction(function () use ($request, $order, &$devueltas) {
+            // Las unidades ya escaneadas vuelven a los pallets de donde
+            // salieron: cancelar no puede hacer desaparecer stock físico.
+            $devueltas = $this->devolverStockEscaneado($order, $request->user()->id);
+
             $order->update([
                 'estado' => OrderStatus::CANCELADO,
             ]);
@@ -170,11 +178,65 @@ class OrderController extends Controller
             OrderEvent::create([
                 'order_id' => $order->id,
                 'tipo_evento' => 'cancelado',
-                'descripcion' => 'Orden cancelada.',
+                'descripcion' => 'Orden cancelada.'
+                    . ($devueltas > 0 ? " Se devolvieron {$devueltas} unidad(es) a sus estantes." : ''),
                 'user_id' => $request->user()->id,
             ]);
         });
 
-        return redirect()->route('orders.index')->with('success', 'Orden cancelada correctamente.');
+        $mensaje = 'Orden cancelada correctamente.'
+            . ($devueltas > 0 ? " Las {$devueltas} unidad(es) escaneadas volvieron a sus estantes: devuélvelas físicamente a su lugar." : '');
+
+        return redirect()->route('orders.index')->with('success', $mensaje);
+    }
+
+    /**
+     * Reintegra a los pallets de origen las unidades ya escaneadas de una
+     * orden (líneas de picking). Si el pallet original ya no existe, se
+     * crea una existencia nueva en el mismo estante, sin puesto, para que
+     * el jefe la reubique. Todo queda en el historial de existencias.
+     */
+    private function devolverStockEscaneado(Order $order, int $userId): int
+    {
+        $total = 0;
+
+        $order->load('items.picks.productLocation');
+
+        foreach ($order->items as $item) {
+            foreach ($item->picks as $pick) {
+                if ($pick->cantidad <= 0) {
+                    continue;
+                }
+
+                $destino = $pick->productLocation;
+
+                if ($destino) {
+                    $destino->increment('cantidad', $pick->cantidad);
+                } elseif ($pick->warehouse_location_id && $item->product_id) {
+                    $destino = ProductLocation::create([
+                        'product_id' => $item->product_id,
+                        'warehouse_location_id' => $pick->warehouse_location_id,
+                        'fecha_ingreso' => now()->toDateString(),
+                        'cantidad' => $pick->cantidad,
+                    ]);
+                } else {
+                    continue;
+                }
+
+                ProductLocationEvent::create([
+                    'product_location_id' => $destino->id,
+                    'user_id' => $userId,
+                    'accion' => 'devuelta',
+                    'detalle' => "{$item->producto_nombre}: +{$pick->cantidad} unidad(es) devueltas por cancelación de la orden #{$order->id}.",
+                ]);
+
+                $total += $pick->cantidad;
+
+                // En cero para que una reversión nunca se aplique dos veces.
+                $pick->update(['cantidad' => 0]);
+            }
+        }
+
+        return $total;
     }
 }

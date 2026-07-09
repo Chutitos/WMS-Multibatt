@@ -60,6 +60,7 @@ Route::middleware(['auth'])->group(function () {
     // Detalle de orden: accesible por los 3 roles, la autorización fina
     // (bodeguero solo si la orden ya salió de "creado") vive en OrderPolicy::view().
     Route::get('/orders/{order}', [OrderController::class, 'show'])->name('orders.show');
+    Route::get('/orders/{order}/imprimir', [OrderController::class, 'imprimir'])->name('orders.imprimir');
 
     // ADMIN + BODEGUERO
     Route::middleware(['role:admin,bodeguero'])->group(function () {

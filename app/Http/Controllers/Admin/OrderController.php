@@ -116,6 +116,19 @@ class OrderController extends Controller
         return view('orders.show', compact('order'));
     }
 
+    /**
+     * Documento imprimible de la orden: papeleta de preparación mientras
+     * está en curso, comprobante de entrega cuando ya se entregó.
+     */
+    public function imprimir(Order $order)
+    {
+        $this->authorize('view', $order);
+
+        $order->load('items.product', 'creator');
+
+        return view('orders.imprimir', compact('order'));
+    }
+
     public function liberar(Request $request, Order $order)
     {
         if (! $order->estado->canTransitionTo(OrderStatus::LIBERADO)) {

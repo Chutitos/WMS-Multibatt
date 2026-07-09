@@ -15,14 +15,41 @@ use Illuminate\Validation\ValidationException;
 
 class ProductLocationController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         // Se listan todas (incluidas las agotadas en 0) para poder corregir
         // un error de carga aunque ya no tengan existencia disponible.
-        $productLocations = ProductLocation::with(['product', 'warehouseLocation'])
+        $query = ProductLocation::with(['product', 'warehouseLocation'])
             ->orderByDesc('cantidad')
-            ->orderBy('fecha_ingreso')
-            ->paginate(20);
+            ->orderBy('fecha_ingreso');
+
+        if ($request->filled('q')) {
+            $texto = $request->string('q');
+            $query->where(function ($q) use ($texto) {
+                $q->whereHas('product', function ($p) use ($texto) {
+                    $p->where('name', 'like', "%{$texto}%")
+                        ->orWhere('sku', 'like', "%{$texto}%")
+                        ->orWhere('marca', 'like', "%{$texto}%");
+                })->orWhereHas('warehouseLocation', function ($u) use ($texto) {
+                    $u->where('nombre', 'like', "%{$texto}%")
+                        ->orWhere('codigo', 'like', "%{$texto}%");
+                });
+            });
+        }
+
+        if ($request->boolean('recarga')) {
+            // El plazo de recarga es por producto (meses_recarga), así que
+            // se resuelve en PHP; el volumen de una bodega física lo permite.
+            $ids = $query->clone()
+                ->where('cantidad', '>', 0)
+                ->get()
+                ->filter(fn ($pl) => $pl->necesitaRecarga())
+                ->pluck('id');
+
+            $query->whereIn('id', $ids);
+        }
+
+        $productLocations = $query->paginate(20)->withQueryString();
 
         return view('product-locations.index', compact('productLocations'));
     }

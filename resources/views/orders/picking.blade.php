@@ -44,6 +44,9 @@ $todoCompleto = $order->items->every(
 
             <div class="flex-1">
                 <div class="text-xl font-bold text-slate-900">{{ $item->producto_nombre }}</div>
+                @if ($item->product?->fichaCorta())
+                <div class="text-base text-slate-500">{{ $item->product->fichaCorta() }}</div>
+                @endif
                 <div class="mt-1 text-lg text-slate-600 ubicacion-sugerida">
                     @if (! $item->product_id)
                     <span class="text-slate-400">Producto sin catálogo — se confirma solo al final</span>

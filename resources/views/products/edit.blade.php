@@ -22,6 +22,47 @@
             <x-wms.input type="text" name="name" value="{{ old('name', $product->name) }}" required />
         </x-wms.field>
 
+        <div class="border-t border-slate-200 pt-5">
+            <h3 class="text-lg font-bold text-slate-900 mb-4">Ficha técnica de la batería</h3>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <x-wms.field label="Marca" name="marca" :optional="true">
+                    <x-wms.input type="text" name="marca" value="{{ old('marca', $product->marca) }}" placeholder="Bosch, Yuasa..." />
+                </x-wms.field>
+
+                <x-wms.field label="Tipo" name="tipo" :optional="true">
+                    <x-wms.select name="tipo">
+                        <option value="">Sin clasificar</option>
+                        @foreach (\App\Models\Product::TIPOS as $valor => $etiqueta)
+                        <option value="{{ $valor }}" {{ old('tipo', $product->tipo) === $valor ? 'selected' : '' }}>{{ $etiqueta }}</option>
+                        @endforeach
+                    </x-wms.select>
+                </x-wms.field>
+
+                <x-wms.field label="Voltaje" name="voltaje" :optional="true">
+                    <x-wms.input type="text" name="voltaje" value="{{ old('voltaje', $product->voltaje) }}" placeholder="12V" />
+                </x-wms.field>
+
+                <x-wms.field label="Capacidad (Ah)" name="capacidad_ah" :optional="true">
+                    <x-wms.input type="number" name="capacidad_ah" min="1" value="{{ old('capacidad_ah', $product->capacidad_ah) }}" placeholder="75" />
+                </x-wms.field>
+            </div>
+        </div>
+
+        <div class="border-t border-slate-200 pt-5">
+            <h3 class="text-lg font-bold text-slate-900 mb-4">Reglas de bodega</h3>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <x-wms.field label="Meses para recarga" name="meses_recarga" hint="Una batería almacenada más de estos meses aparecerá como '⚡ Recargar'.">
+                    <x-wms.input type="number" name="meses_recarga" min="1" max="36" value="{{ old('meses_recarga', $product->meses_recarga) }}" required />
+                </x-wms.field>
+
+                <x-wms.field label="Stock mínimo físico" name="stock_minimo" hint="0 = sin alerta. Si la existencia baja de aquí, se avisa en el inicio.">
+                    <x-wms.input type="number" name="stock_minimo" min="0" value="{{ old('stock_minimo', $product->stock_minimo) }}" required />
+                </x-wms.field>
+            </div>
+        </div>
+
         <x-wms.field label="Descripción" name="description" :optional="true">
             <x-wms.textarea name="description" rows="3">{{ old('description', $product->description) }}</x-wms.textarea>
         </x-wms.field>

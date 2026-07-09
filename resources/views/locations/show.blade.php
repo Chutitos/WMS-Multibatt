@@ -31,14 +31,20 @@ $puedeAsignar = in_array($rol, ['admin', 'bodeguero'], true);
                 @php $pallet = $grilla[$nivel][$columna] ?? null; @endphp
 
                 @if ($pallet)
-                <div class="rounded-xl border-2 border-blue-300 bg-blue-50 p-3">
+                <div class="rounded-xl border-2 {{ $pallet->necesitaRecarga() ? 'border-amber-400 bg-amber-50' : 'border-blue-300 bg-blue-50' }} p-3">
                     <div class="text-base font-bold text-slate-900 leading-tight">{{ $pallet->product->name }}</div>
+                    @if ($pallet->product->fichaCorta())
+                    <div class="text-xs text-slate-500">{{ $pallet->product->fichaCorta() }}</div>
+                    @endif
                     <div class="mt-1 text-sm text-slate-600">
                         {{ $pallet->cantidad }} unidades
                         @if ($pallet->lote)
                         <span class="block">Lote {{ $pallet->lote }}</span>
                         @endif
                         <span class="block">Ingreso {{ $pallet->fecha_ingreso->format('d-m-Y') }}</span>
+                        @if ($pallet->necesitaRecarga())
+                        <span class="mt-1 inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-800">⚡ Recargar</span>
+                        @endif
                     </div>
                     @if ($puedeAsignar)
                     <a href="{{ route('product-locations.edit', $pallet) }}"

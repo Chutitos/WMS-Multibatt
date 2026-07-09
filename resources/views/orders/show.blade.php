@@ -126,6 +126,10 @@ use App\Enums\OrderStatus;
 
     <x-wms.btn size="lg" variant="secondary" href="{{ route($volverRuta) }}">← Volver</x-wms.btn>
 
+    <x-wms.btn size="lg" variant="secondary" href="{{ route('orders.imprimir', $order) }}" target="_blank">
+        🖨 Imprimir
+    </x-wms.btn>
+
     @can('liberar', $order)
     <form method="POST" action="{{ route('orders.liberar', $order) }}">
         @csrf

@@ -8,6 +8,41 @@
     </p>
 </div>
 
+@php $esAdmin = auth()->user()->role->name === 'admin'; @endphp
+
+@if ($porRecargar > 0 || $bajoStock > 0)
+<div class="mb-6 space-y-3">
+    @if ($porRecargar > 0)
+    @if ($esAdmin)
+    <a href="{{ route('product-locations.index', ['recarga' => 1]) }}"
+        class="block bg-amber-50 border-4 border-amber-300 rounded-2xl px-6 py-4 hover:bg-amber-100 transition">
+        <span class="text-xl font-bold text-amber-900">⚡ {{ $porRecargar }} {{ $porRecargar === 1 ? 'pallet necesita' : 'pallets necesitan' }} recarga</span>
+        <span class="block mt-1 text-base text-amber-800">Baterías con demasiado tiempo almacenadas. Toca para verlas.</span>
+    </a>
+    @else
+    <div class="bg-amber-50 border-4 border-amber-300 rounded-2xl px-6 py-4">
+        <span class="text-xl font-bold text-amber-900">⚡ {{ $porRecargar }} {{ $porRecargar === 1 ? 'pallet necesita' : 'pallets necesitan' }} recarga</span>
+        <span class="block mt-1 text-base text-amber-800">Avísale a bodega para que las recargue.</span>
+    </div>
+    @endif
+    @endif
+
+    @if ($bajoStock > 0)
+    <div class="bg-red-50 border-4 border-red-200 rounded-2xl px-6 py-4 {{ $esAdmin ? 'hover:bg-red-100 transition' : '' }}">
+        @if ($esAdmin)
+        <a href="{{ route('products.index') }}" class="block">
+            <span class="text-xl font-bold text-red-900">🔋 {{ $bajoStock }} {{ $bajoStock === 1 ? 'batería está' : 'baterías están' }} bajo el stock mínimo</span>
+            <span class="block mt-1 text-base text-red-800">Revisa el catálogo para ver cuáles reponer.</span>
+        </a>
+        @else
+        <span class="text-xl font-bold text-red-900">🔋 {{ $bajoStock }} {{ $bajoStock === 1 ? 'batería está' : 'baterías están' }} bajo el stock mínimo</span>
+        <span class="block mt-1 text-base text-red-800">Considera reponerlas con el proveedor.</span>
+        @endif
+    </div>
+    @endif
+</div>
+@endif
+
 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
     <x-wms.stat-card
         :href="route('orders.index', ['estado' => 'liberado'])"

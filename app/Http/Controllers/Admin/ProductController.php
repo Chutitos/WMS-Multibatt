@@ -6,12 +6,32 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreProductRequest;
 use App\Http\Requests\UpdateProductRequest;
 use App\Models\Product;
+use Illuminate\Http\Request;
 
 class ProductController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $products = Product::latest()->paginate(15);
+        $query = Product::query();
+
+        if ($request->filled('q')) {
+            $texto = $request->string('q');
+            $query->where(function ($q) use ($texto) {
+                $q->where('name', 'like', "%{$texto}%")
+                    ->orWhere('sku', 'like', "%{$texto}%")
+                    ->orWhere('marca', 'like', "%{$texto}%")
+                    ->orWhere('barcode', 'like', "%{$texto}%");
+            });
+        }
+
+        if ($request->filled('tipo')) {
+            $query->where('tipo', $request->string('tipo'));
+        }
+
+        $products = $query->withSum('productLocations as existencia_fisica', 'cantidad')
+            ->latest()
+            ->paginate(15)
+            ->withQueryString();
 
         return view('products.index', compact('products'));
     }

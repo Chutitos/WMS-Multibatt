@@ -14,6 +14,29 @@ $esAdmin = auth()->user()->role->name === 'admin';
     </x-slot:actions>
 </x-wms.page-header>
 
+<form method="GET" action="{{ route('product-locations.index') }}"
+    class="mb-6 bg-white rounded-2xl shadow-sm border border-slate-200 p-5 flex flex-col md:flex-row gap-4 md:items-end">
+    <div class="flex-1">
+        <label class="block text-sm font-semibold text-slate-700 mb-2">Buscar</label>
+        <input type="text" name="q" value="{{ request('q') }}" placeholder="Batería, SKU, marca, estante o código"
+            class="w-full rounded-xl border-2 border-slate-300 text-base px-3 py-2 focus:border-blue-500 focus:ring-blue-500">
+    </div>
+
+    <label class="flex items-center gap-3 px-4 py-2.5 bg-amber-50 border-2 border-amber-200 rounded-xl cursor-pointer">
+        <input type="checkbox" name="recarga" value="1" {{ request()->boolean('recarga') ? 'checked' : '' }}
+            class="w-5 h-5 rounded border-slate-300 text-amber-600 focus:ring-amber-500">
+        <span class="text-base font-semibold text-amber-900">⚡ Solo por recargar</span>
+    </label>
+
+    <div class="flex gap-2">
+        <x-wms.btn variant="dark">Buscar</x-wms.btn>
+
+        @if (request()->filled('q') || request()->boolean('recarga'))
+        <x-wms.btn variant="secondary" href="{{ route('product-locations.index') }}">Limpiar</x-wms.btn>
+        @endif
+    </div>
+</form>
+
 <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
     <div class="overflow-x-auto">
         <table class="min-w-full text-base">
@@ -40,7 +63,12 @@ $esAdmin = auth()->user()->role->name === 'admin';
                         {{ $pl->columna ? "C{$pl->columna} · N{$pl->nivel}" : '-' }}
                     </td>
                     <td class="px-6 py-4 text-slate-700">{{ $pl->lote ?: '-' }}</td>
-                    <td class="px-6 py-4 text-slate-700">{{ $pl->fecha_ingreso->format('d-m-Y') }}</td>
+                    <td class="px-6 py-4 text-slate-700 whitespace-nowrap">
+                        {{ $pl->fecha_ingreso->format('d-m-Y') }}
+                        @if ($pl->necesitaRecarga())
+                        <span class="ml-1 inline-flex items-center rounded-full bg-amber-100 px-2.5 py-0.5 text-sm font-bold text-amber-800">⚡ Recargar</span>
+                        @endif
+                    </td>
                     <td class="px-6 py-4 text-slate-900 font-bold">
                         {{ $pl->cantidad }}
                         @if ($pl->cantidad === 0)
